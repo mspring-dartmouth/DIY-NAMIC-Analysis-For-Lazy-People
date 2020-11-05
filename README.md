@@ -6,4 +6,4 @@ After downloading all the files into a folder, please run ""0_RunMe_Mac_Computer
 
  file_name.append(full_path.split("/")[-1])  # Mac Comptuer
  
- file_name.append(full_path.split("\\")[-1])  # PC comptuer
+ file_name.append(full_path.split("\ \")[-1])  # PC comptuer
