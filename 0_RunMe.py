@@ -31,6 +31,7 @@ from datetime import timedelta
 import pandas as pd
 import time 
 import re # for spliting strings with multlple delimers 
+from natsort import natsorted
 
 
 # Bin needs to be in hours.  To do minutes,  change line 245
@@ -39,10 +40,17 @@ Bin = input ('What is the analysis bin size in hours? \n(Integer input, lab defa
 ExtraBin = input('There are residual time leftover in the end of the files.  Select a bin size threshold (in hours) to export those leftover time or type in the same bin size again if you don"t want those residual times. \n(Integer/Float input, lab default is "15") \n\n ')
 YesToLatency = input ('\n We will export the count data.\n However, latency data with small analysis time window (e.g. 2 hrs) can cause errors.\n Do you also want to export latency data? (y/n).) )\n\n')
 
-print('\n\n Where is your data? (Please select Path from opened window) ')
 
 # # Directory Selection
-(files_list, selected_dir_title) = select_all_files_in_directory()
+try: # If user provided pathname to data, use it.
+    file_pattern = os.path.join(sys.argv[1], '*.txt')
+    files_list = natsorted(glob.glob(file_pattern), alg=ns.IGNORECASE)
+    selected_dir_title = os.path.basename(sys.argv[1])
+
+except IndexError: # If no argument provided, prompt for selection.
+    print('\n\n Where is your data? (Please select Path from opened window) ')    
+    (files_list, selected_dir_title) = select_all_files_in_directory()
+
 box_numbers = get_box_numbers(files_list)
 file_count = len(files_list)
 time.sleep(2) # add some delay time
@@ -56,11 +64,15 @@ if len(files_list) == 0:
     
     
 time.sleep(2) # add some delay time
-print('\n Where should we save the analysis files? (Please select Path)')
-## Pick the file path! (single file (output from Step 0)
-file_path = select_single_dir()
-time.sleep(2) # add some delay time
-print('\n Thank you!')
+
+try: # If user provided second argument, use it as output path. 
+    file_path = sys.argv[2]
+except IndexError:  # If not, prompt for input.
+    print('\n Where should we save the analysis files? (Please select Path)')
+    ## Pick the file path! (single file (output from Step 0)
+    file_path = select_single_dir()
+    time.sleep(2) # add some delay time
+    print('\n Thank you!')
 
 
 
