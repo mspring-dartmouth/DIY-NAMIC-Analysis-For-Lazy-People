@@ -46,7 +46,7 @@ print('\n\n Where is your data? (Please select Path from opened window) ')
 box_numbers = get_box_numbers(files_list)
 file_count = len(files_list)
 time.sleep(2) # add some delay time
-print('\n Thank you,  I found %s text file(s)' % (file_count))
+print(f'\n Thank you,  I found {file_count} text file(s)')
 time.sleep(2) # add some delay time
 
 if len(files_list) == 0:
@@ -88,7 +88,7 @@ for i in range(file_count):
     #file_name.append(full_path.split("\\")[-1])  # File name is always the last in the list # Modified for Windows Computer
     file_name.append(re.split(r'/|\\', full_path)[-1])
 
-print('\n\n Your Analysis Output will be located in %s' % OUTDIR)
+print(f'\n\n Your Analysis Output will be located in {OUTDIR}')
 print('\n Please wait while we export the data')
 start = time.time()  #  for calculating runtime 
 
@@ -124,7 +124,7 @@ for xx in range(file_count):  # go through each file
                 
         if (error == 1 ):
             stop_script = 1
-            print('\n There is missing information in "%s" for text file \n "%s" ' % (varname[x], file_name[xx]))
+            print(f'\n There is missing information in "{varname[x]}" for text file \n "{file_name[xx]}" ')
             temp_file_info[varname[x]]= 'NaN'  #  Space holder for when data is missing 
             
     
@@ -242,6 +242,7 @@ for j in range(len(final_temp_item_list)): # run through each concat file
             
             
     #find the latest start time and earliest end time 
+    # TODO 1-22-21: It really seems like datetime ought to be able to be used to pull info from this a little bit more cleanly.
     
     datetimeFormat = '%Y/%m/%d %H:%M'
     ReferenceTime = TempStartDate[0].split("/")[-1] + '/' + TempStartDate[0].split("/")[-3] + "/" + TempStartDate[0].split("/")[-2] + ' '+ '00:00'
@@ -705,7 +706,7 @@ with pd.ExcelWriter(IOUTDIR_Analysis_Output + '/' + selected_dir_title + "_Summa
 
     for i, df in enumerate(df_list):
         # TRANSPOSE HERE!
-        df.T.to_excel(writer, '%s' % valid_code_string[i])  ## %s means the substitute is a "string" (data type)
+        df.T.to_excel(writer, f'{valid_code_string[i]}')
 
      
     
@@ -724,12 +725,12 @@ print('\n\n\n\n\n\n')
 
 print(np.transpose(processed_list))
 print('\n\n Thank you,  analysis is completed! ') 
-print('\n It only took me %f minutes to run the anlaysis!' %(runtime))
+print(f'\n It only took me {runtime} minutes to run the anlaysis!')
 
 
 print('\n\n For your convenience, paradigm information is stored in variable < processed_list_forExcel > ')
 
-print('\n\n Your Analysis Output is located in %s' % OUTDIR)
+print(f'\n\n Your Analysis Output is located in {OUTDIR}')
 
 
 
