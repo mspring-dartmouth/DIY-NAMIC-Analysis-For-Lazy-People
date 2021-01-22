@@ -79,16 +79,16 @@ except IndexError:  # If not, prompt for input.
 OUTDIR = os.path.join(file_path, 'DIY-NAMIC_Analysis_Output')  # Put data files into folders
 
 if os.path.isdir(OUTDIR): #  remove previous ananlysis folder if in the same location
-    print('\n I detected analysis folder from previous run. The folder "DIY-NAMIC_Analysis_Output" will be replace.  ')
+    print('\n I detected analysis folder from previous run. The folder "DIY-NAMIC_Analysis_Output" will be replaced.  ')
     shutil.rmtree(OUTDIR)
 
 
 if not os.path.isdir(OUTDIR):  #  only create output folder if output link does not already exist
     os.mkdir(OUTDIR)
     
-    IOUTDIR_Rerranged_Data = os.path.join(OUTDIR, 'Rerranged_Data')  # Path for creating individual particpant output folder for saving data
-    if not os.path.isdir(IOUTDIR_Rerranged_Data):  # only creat output folder if output link  does not exist 
-        os.mkdir(IOUTDIR_Rerranged_Data)
+    IOUTDIR_Rearranged_Data = os.path.join(OUTDIR, 'Rearranged_Data')  # Path for creating individual particpant output folder for saving data
+    if not os.path.isdir(IOUTDIR_Rearranged_Data):  # only creat output folder if output link  does not exist 
+        os.mkdir(IOUTDIR_Rearranged_Data)
     
     IOUTDIR_Analysis_Output = os.path.join(OUTDIR, 'Analysis_Output')  # Path for creating individual particpant output folder for saving data
     if not os.path.isdir(IOUTDIR_Analysis_Output):  # only creat output folder if output link  does not exist 
@@ -169,13 +169,13 @@ for k in range(len(temp_item_list)):
 
 for i in range(len(temp_item_list)):
     
-    IOUTDIR_temp = os.path.join(IOUTDIR_Rerranged_Data, final_temp_item_list[i])  # Path for creating individual particpant output folder for saving data
+    IOUTDIR_temp = os.path.join(IOUTDIR_Rearranged_Data, final_temp_item_list[i])  # Path for creating individual particpant output folder for saving data
     if not os.path.isdir(IOUTDIR_temp):  # only creat output folder if output link  does not exist 
         os.mkdir(IOUTDIR_temp)
 
 #  Copy files to new rerrange folder 
 for j in range(file_count):
-    IOUTDIR_temp = os.path.join(IOUTDIR_Rerranged_Data, (temp_file_list[j].replace(' ', '')).replace('/', '_')+'/'+file_name[j])
+    IOUTDIR_temp = os.path.join(IOUTDIR_Rearranged_Data, (temp_file_list[j].replace(' ', '')).replace('/', '_')+'/'+file_name[j])
     shutil.copyfile(files_list[j],IOUTDIR_temp )
     
 
@@ -185,7 +185,7 @@ IOUTDIR_Concat_files = os.path.join(IOUTDIR_Analysis_Output, 'Concat_files')  # 
 if not os.path.isdir(IOUTDIR_Concat_files):  # only create output folder if output link  does not exist 
     os.mkdir(IOUTDIR_Concat_files)
 for k in range(len(temp_item_list)):
-    IOUTDIR_temp = os.path.join(IOUTDIR_Rerranged_Data, final_temp_item_list[k])
+    IOUTDIR_temp = os.path.join(IOUTDIR_Rearranged_Data, final_temp_item_list[k])
     
     #  modified from Step0F_Function_Calls 
     # # Directory Selection
