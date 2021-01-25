@@ -130,11 +130,11 @@ for xx in range(file_count):  # go through each file
     for var_name in varnames:    
         error = 1 
         if var_name in df.loc[:, 'event_code'].values:
-        	# If the variable is present, store index of its first appearance...
-        	temp_file_info[var_name] = df[df.event_code==var_name].index[0]
-        	# and reset error to False.
-        	error = 0
-                
+            # If the variable is present, store index of its first appearance...
+            first_index = df[df.event_code==var_name].index[0]
+            temp_file_info[var_name] = df.loc[first_index, 'timestamp'] 
+            # and reset error to False.
+            error = 0
         # If the variable is not present, alert user and store stop-state. 
         if (error == 1 ):
             stop_script = 1
@@ -159,20 +159,18 @@ temp_file_list = []
 for j in range(file_count):
     temp_file_list.append(file_info['Paradigm'][j]+ '-_-'+ file_info['Start Date'][j])
 
+# I can't for the life of me figure out what the purpose of Counter is here. 
+# It SEEMS like it's basically just acting as set(), but I'm not sure. 
 temp_item_list = list(Counter(temp_file_list).keys())
-no_space_temp_item_list = []  # remove spacings for the file names
-final_temp_item_list = []  # remove - for the file names
+# Create an intermediate iterable in which all the spaces are removed.
+no_space_temp_item_list = map(lambda x: x.replace(' ', ''), temp_item_list)
+# Finalize names by replacing '/' with '_'. Store as list.
+final_item_list = list(map(lambda x: x.replace('/', '_'), no_space_temp_item_list))
 
-for k in range(len(temp_item_list)):
-    no_space_temp_item_list.append(temp_item_list[k].replace(' ', ''))
-
-for k in range(len(temp_item_list)):
-    final_temp_item_list.append(no_space_temp_item_list[k].replace('/', '_'))
-
-for i in range(len(temp_item_list)):
+for f_name in final_item_list:
     
-    IOUTDIR_temp = os.path.join(IOUTDIR_Rearranged_Data, final_temp_item_list[i])  # Path for creating individual particpant output folder for saving data
-    if not os.path.isdir(IOUTDIR_temp):  # only creat output folder if output link  does not exist 
+    IOUTDIR_temp = os.path.join(IOUTDIR_Rearranged_Data, f_name)  # Path for creating individual participant output folder for saving data
+    if not os.path.isdir(IOUTDIR_temp):  # only create output folder if output link  does not exist 
         os.mkdir(IOUTDIR_temp)
 
 #  Copy files to new rerrange folder 
@@ -187,7 +185,7 @@ IOUTDIR_Concat_files = os.path.join(IOUTDIR_Analysis_Output, 'Concat_files')  # 
 if not os.path.isdir(IOUTDIR_Concat_files):  # only create output folder if output link  does not exist 
     os.mkdir(IOUTDIR_Concat_files)
 for k in range(len(temp_item_list)):
-    IOUTDIR_temp = os.path.join(IOUTDIR_Rearranged_Data, final_temp_item_list[k])
+    IOUTDIR_temp = os.path.join(IOUTDIR_Rearranged_Data, final_item_list[k])
     
     #  modified from Step0F_Function_Calls 
     # # Directory Selection
@@ -206,7 +204,7 @@ for k in range(len(temp_item_list)):
 # file_count
 # file_name
 # file_info
-# final_temp_item_list
+# final_item_list
 
 IOUTDIR_M_files = os.path.join(IOUTDIR_Analysis_Output, 'M_files')  # Path for creating individual particpant output folder for saving data
 if not os.path.isdir(IOUTDIR_M_files):  # only create output folder if output link  does not exist 
@@ -228,13 +226,13 @@ processed_list = []
 processed_p_list = []
 processed_date_list = []
 
-for j in range(len(final_temp_item_list)): # run through each concat file
+for j in range(len(final_item_list)): # run through each concat file
     
     
     
-    # split final_temp_item_list
-    TempParadigm = final_temp_item_list[j].split("-_-")[-2]
-    TempDate =  (final_temp_item_list[j].split("-_-")[-1]).replace('_', '/')
+    # split final_item_list
+    TempParadigm = final_item_list[j].split("-_-")[-2]
+    TempDate =  (final_item_list[j].split("-_-")[-1]).replace('_', '/')
     
      # grab individual csv header info for each concat file
     TempStartDate = []
@@ -298,7 +296,7 @@ for j in range(len(final_temp_item_list)): # run through each concat file
         NextTimeStamp =((str(NextTimeStamp).split(" ")[-2]).replace('-', '/') + ' ' +  (str(NextTimeStamp).split(" ")[-1]).split(":")[-3] + ":" + (str(NextTimeStamp).split(" ")[-1]).split(":")[-2])
     
     
-    print('\n\n\n', final_temp_item_list[j]+ "_concat.csv")
+    print('\n\n\n', final_item_list[j]+ "_concat.csv")
     print('Possible Start Time:', PossibleStartTime)
     print('Possible End Time:', PossibleEndTime)
     
@@ -320,7 +318,7 @@ for j in range(len(final_temp_item_list)): # run through each concat file
     print(Timelist)
        
     # concat file link to import to function_1 and function_8
-    IOUTDIR_temp = os.path.join(IOUTDIR_Concat_files, final_temp_item_list[j]+ "_concat.csv")
+    IOUTDIR_temp = os.path.join(IOUTDIR_Concat_files, final_item_list[j]+ "_concat.csv")
     print(IOUTDIR_temp) 
      
     #loop through all the timestamps per concat file for function_1
@@ -369,8 +367,8 @@ for j in range(len(final_temp_item_list)): # run through each concat file
 
         
         count = count+1
-        processed_list.append(final_temp_item_list[j].split("-_-")[-2]+ '  '+ start_parsetime + '   ' + end_parsetime)
-        processed_p_list.append(final_temp_item_list[j].split("-_-")[-2])
+        processed_list.append(final_item_list[j].split("-_-")[-2]+ '  '+ start_parsetime + '   ' + end_parsetime)
+        processed_p_list.append(final_item_list[j].split("-_-")[-2])
         processed_date_list.append(start_parsetime)
     #loop through all the timestamps per concat file for function_8 with latency_choice = response 
     counttwo = 0
@@ -400,8 +398,8 @@ for j in range(len(final_temp_item_list)): # run through each concat file
         group_number_input = ("g5").strip().lower()
         start_parsetime = (Timelist[counttwo]).strip()
         end_parsetime = (Timelist[counttwo+1]).strip()
-        #paradigm = (((final_temp_item_list[j]).split("-")[0]).replace('P', '')).strip()
-        paradigm = re.split('-|_',final_temp_item_list[j])[0].replace('P', '').strip()  #  allows P5-5 or P5_5  "-" or "_" labeling 
+        #paradigm = (((final_item_list[j]).split("-")[0]).replace('P', '')).strip()
+        paradigm = re.split('-|_',final_item_list[j])[0].replace('P', '').strip()  #  allows P5-5 or P5_5  "-" or "_" labeling 
         paradigm = int(paradigm)
         print('\nParadigm number for latency code (response) is ...', paradigm)
         latency_choice = ('response').strip().lower()
@@ -441,7 +439,7 @@ for j in range(len(final_temp_item_list)): # run through each concat file
             # Objective: In order to concatenate the latency files later!
             
             #save_title = IOUTDIR_Latency_Response + '/' + start_parsetime[:10].replace("/","-") + "_latency_Response.xlsx"
-            save_title = IOUTDIR_Latency_Response + '/' + final_temp_item_list[j].split('-_-')[0] + '_'+ ((start_parsetime.replace('/','_')).replace(' ','-')).replace(':','_') + "_latency_Response.xlsx"
+            save_title = IOUTDIR_Latency_Response + '/' + final_item_list[j].split('-_-')[0] + '_'+ ((start_parsetime.replace('/','_')).replace(' ','-')).replace(':','_') + "_latency_Response.xlsx"
    
             
             plot_df = convert_to_long_format(m_latency_df)
@@ -505,8 +503,8 @@ for j in range(len(final_temp_item_list)): # run through each concat file
         group_number_input = ("g5").strip().lower()
         start_parsetime = (Timelist[counttwo]).strip()
         end_parsetime = (Timelist[counttwo+1]).strip()
-        #paradigm = (((final_temp_item_list[j]).split("-")[0]).replace('P', '')).strip()
-        paradigm = re.split('-|_',final_temp_item_list[j])[0].replace('P', '').strip()  #  allows P5-5 or P5_5  "-" or "_" labeling 
+        #paradigm = (((final_item_list[j]).split("-")[0]).replace('P', '')).strip()
+        paradigm = re.split('-|_',final_item_list[j])[0].replace('P', '').strip()  #  allows P5-5 or P5_5  "-" or "_" labeling 
         paradigm = int(paradigm)
         print('\nParadigm number for latency code (retrieval) is ...', paradigm)
         latency_choice = ('retrieval').strip().lower()
@@ -546,7 +544,7 @@ for j in range(len(final_temp_item_list)): # run through each concat file
             # Objective: In order to concatenate the latency files later!
             
             #save_title = IOUTDIR_Latency_Retrieval + '/' + start_parsetime[:10].replace("/","-") + "_latency_Retrieval.xlsx"
-            save_title = IOUTDIR_Latency_Retrieval + '/' + final_temp_item_list[j].split('-_-')[0] + '_'+ ((start_parsetime.replace('/','_')).replace(' ','-')).replace(':','_') + "_latency_Retrieval.xlsx"
+            save_title = IOUTDIR_Latency_Retrieval + '/' + final_item_list[j].split('-_-')[0] + '_'+ ((start_parsetime.replace('/','_')).replace(' ','-')).replace(':','_') + "_latency_Retrieval.xlsx"
    
             
             plot_df = convert_to_long_format(m_latency_df)
@@ -609,8 +607,8 @@ for j in range(len(final_temp_item_list)): # run through each concat file
         group_number_input = ("g5").strip().lower()
         start_parsetime = (Timelist[counttwo]).strip()
         end_parsetime = (Timelist[counttwo+1]).strip()
-        #paradigm = (((final_temp_item_list[j]).split("-")[0]).replace('P', '')).strip()
-        paradigm = re.split('-|_',final_temp_item_list[j])[0].replace('P', '').strip()  #  allows P5-5 or P5_5  "-" or "_" labeling 
+        #paradigm = (((final_item_list[j]).split("-")[0]).replace('P', '')).strip()
+        paradigm = re.split('-|_',final_item_list[j])[0].replace('P', '').strip()  #  allows P5-5 or P5_5  "-" or "_" labeling 
         paradigm = int(paradigm)
         print('\nParadigm number for latency code (initiation) is ...', paradigm)
         latency_choice = ('initiation').strip().lower()
@@ -650,7 +648,7 @@ for j in range(len(final_temp_item_list)): # run through each concat file
             # Objective: In order to concatenate the latency files later!
             
             #save_title = IOUTDIR_Latency_Initiation + '/' + start_parsetime[:10].replace("/","-") + "_latency_Initiation.xlsx"
-            save_title = IOUTDIR_Latency_Initiation + '/' + final_temp_item_list[j].split('-_-')[0] + '_'+ ((start_parsetime.replace('/','_')).replace(' ','-')).replace(':','_') + "_latency_Initiation.xlsx"
+            save_title = IOUTDIR_Latency_Initiation + '/' + final_item_list[j].split('-_-')[0] + '_'+ ((start_parsetime.replace('/','_')).replace(' ','-')).replace(':','_') + "_latency_Initiation.xlsx"
             
             plot_df = convert_to_long_format(m_latency_df)
             plot_df['Group'] = group   # Adding Group Information!
@@ -762,7 +760,7 @@ print(f'\n\n Your Analysis Output is located in {OUTDIR}')
     
     
     #  concat file link to import to function_1
-    # IOUTDIR_temp = os.path.join(IOUTDIR_Concat_files, final_temp_item_list[j]+ "_concat.csv")
+    # IOUTDIR_temp = os.path.join(IOUTDIR_Concat_files, final_item_list[j]+ "_concat.csv")
     # print(IOUTDIR_temp)
     
     # pull information from file_info 
