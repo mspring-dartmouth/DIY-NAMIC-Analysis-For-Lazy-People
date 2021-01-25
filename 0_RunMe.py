@@ -109,11 +109,11 @@ start = time.time()  #  for calculating runtime
 
 
 
-varname = []
+varnames = []
 stop_script = 0
-varname.extend(['Start Date', 'Start Time', 'Mouse Line', 'Experiment', 'Paradigm', 'Group', 'Sex', 'Subject', 'Box Number', '0113']) # dictionary for file info
-varname.extend(['7070', '8070','9070','5521']) # inintal timestamps
-varname.extend(['End Date', 'End Time'])
+varnames.extend(['Start Date', 'Start Time', 'Mouse Line', 'Experiment', 'Paradigm', 'Group', 'Sex', 'Subject', 'Box Number', '0113']) # dictionary for file info
+varnames.extend(['7070', '8070','9070','5521']) # inintal timestamps
+varnames.extend(['End Date', 'End Time'])
 
 
 #create dictionary 
@@ -124,29 +124,31 @@ for xx in range(file_count):  # go through each file
     temp_file_info = {}
     col_names = ['event_code', 'timestamp', 'counter'] # For TIR (Groups 1,2)
     df = pd.read_csv(files_list[xx], sep=":", header=None, names=col_names)
-    
-    
-    for x in range(len(varname)): # go through each variable
-        error = 1 # make sure there is no missing information
-        for i in range(len(df)): # searh for variable keywords within each file
-            if (varname[x]== df['event_code'][i]): 
-                error = 0  # found the timestamp means no error
-                temp_file_info[varname[x]]= df['timestamp'][i]
-                break  #  terminates loop after finding the first event 
+      
+    # Make sure each of the expected variables is present at least once in each file.
+    # Loop through variables and find first instance in each file. 
+    for var_name in varnames:    
+        error = 1 
+        if var_name in df.loc[:, 'event_code'].values:
+        	# If the variable is present, store index of its first appearance...
+        	temp_file_info[var_name] = df[df.event_code==var_name].index[0]
+        	# and reset error to False.
+        	error = 0
                 
+        # If the variable is not present, alert user and store stop-state. 
         if (error == 1 ):
             stop_script = 1
-            print(f'\n There is missing information in "{varname[x]}" for text file \n "{file_name[xx]}" ')
-            temp_file_info[varname[x]]= 'NaN'  #  Space holder for when data is missing 
+            print(f'\n There is missing information in "{var_name}" for text file \n "{file_name[xx]}" ')
+            temp_file_info[var_name]= 'NaN'  #  Space holder for when data is missing 
             
     
     #append individual file information to overall file information
-    for j in varname:
+    for j in varnames:
         file_info[j].append(temp_file_info[j])
 
 
 if (stop_script == 1):
-    print('\n Sorry, we have to stop the analysis.  There are missing informations in the data file(s).  You need to fix the above file(s) before proceeding. ')
+    print('\n Sorry, we have to stop the analysis.  There is missing information in the data file(s).  You need to fix the above file(s) before proceeding. ')
     sys.exit()  # exit the program
     
     
