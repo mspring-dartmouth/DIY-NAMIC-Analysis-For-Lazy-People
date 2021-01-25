@@ -34,6 +34,10 @@ import re # for spliting strings with multlple delimers
 from natsort import natsorted
 
 
+###################################
+#         Get user input          #
+###################################
+
 # Bin needs to be in hours.  To do minutes,  change line 245
 print('Files with acquisition time less than the user defined analysis bin size will <<NOT>> be analyzed even though the files will still be sorted')
 Bin = input ('What is the analysis bin size in hours? \n(Integer input, lab default is "23")\n\n')
@@ -75,6 +79,10 @@ except IndexError:  # If not, prompt for input.
     print('\n Thank you!')
 
 
+#####################################
+#Set up directories for output files#
+#####################################
+
 
 OUTDIR = os.path.join(file_path, 'DIY-NAMIC_Analysis_Output')  # Put data files into folders
 
@@ -103,9 +111,6 @@ for i in range(file_count):
 print(f'\n\n Your Analysis Output will be located in {OUTDIR}')
 print('\n Please wait while we export the data')
 start = time.time()  #  for calculating runtime 
-
-
-
 
 
 
@@ -178,6 +183,10 @@ for j in range(file_count):
     IOUTDIR_temp = os.path.join(IOUTDIR_Rearranged_Data, (temp_file_list[j].replace(' ', '')).replace('/', '_')+'/'+file_name[j])
     shutil.copyfile(files_list[j],IOUTDIR_temp )
     
+
+###################################
+#     Step_0F_Function_Calls      #
+###################################
 
 
 #  run Step0F_Function_Calls on all the generated folders
