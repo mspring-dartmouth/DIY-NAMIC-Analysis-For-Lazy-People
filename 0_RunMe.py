@@ -185,11 +185,11 @@ for j in range(file_count):
     
 
 ###################################
-#     Step_0F_Function_Calls      #
+#   Step_0a_file_concatenate.py   #
 ###################################
 
 
-#  run Step0F_Function_Calls on all the generated folders
+#  Call functions from step0a_file_concatenate to concatenate raw files into a single output spreadsheet. 
 IOUTDIR_Concat_files = os.path.join(IOUTDIR_Analysis_Output, 'Concat_files')  # Path for creating individual particpant output folder for saving data
 if not os.path.isdir(IOUTDIR_Concat_files):  # only create output folder if output link  does not exist 
     os.mkdir(IOUTDIR_Concat_files)
@@ -689,6 +689,9 @@ for j in range(len(final_item_list)): # run through each concat file
 
         
             counttwo = counttwo+1
+
+
+# STOP HERE FOR THE DAY ON 1/26/21
 
         
 # run step_2 Function call (copied from Step2F_Function)
