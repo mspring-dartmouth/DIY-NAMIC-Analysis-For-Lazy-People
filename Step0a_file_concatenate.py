@@ -3,8 +3,6 @@ import os
 import re
 import pandas as pd
 
-from Tkinter_Selection_Ka_Modified import select_all_files_in_directory
-
 def get_box_numbers(files_list):
     """
     :param files_list: list of the individual files within that directory (dtype:list)
