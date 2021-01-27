@@ -290,8 +290,6 @@ for run_info_string in final_item_list:
             max_time = TimeinSeconds
             PossibleStartTime = datetime.datetime.strftime(TestTime, datetimeFormat)
 
-
-
     # Min time is tracked using a different method. See loop.
     for l in range(len(TempEndDate)):
         curr_date_as_datetime = datetime.datetime.strptime(TempEndDate[l], '%m/%d/%Y')
@@ -330,17 +328,15 @@ for run_info_string in final_item_list:
     NextTimeStamp = PossibleStartTime
     
     for m in range(Suggested_Number_of_Run):  # subtract one for the begining timestamp 
-        NextTimeStamp = datetime.datetime.strptime(NextTimeStamp, datetimeFormat) + datetime.timedelta(hours= int(Bin))
-        Timelist.append((str(NextTimeStamp).split(" ")[-2]).replace('-', '/') + ' ' +  (str(NextTimeStamp).split(" ")[-1]).split(":")[-3] + ":" + (str(NextTimeStamp).split(" ")[-1]).split(":")[-2])
-        NextTimeStamp =((str(NextTimeStamp).split(" ")[-2]).replace('-', '/') + ' ' +  (str(NextTimeStamp).split(" ")[-1]).split(":")[-3] + ":" + (str(NextTimeStamp).split(" ")[-1]).split(":")[-2])
+        NextTimeStamp = datetime.datetime.strptime(NextTimeStamp, datetimeFormat) + datetime.timedelta(hours=int(Bin))
+        NextTimeStamp = datetime.datetime.strftime(NextTimeStamp, datetimeFormat)
+        Timelist.append(NextTimeStamp)
     
     
     print('\n\n\n', run_info_string+ "_concat.csv")
     print('Possible Start Time:', PossibleStartTime)
     print('Possible End Time:', PossibleEndTime)
-    
-
-    ### STOP HERE FOR THE DAY 1/27/21    
+      
 
     #  add possible extra time providing that the last block of time is within the "ExtraBin" range. 
     diff = datetime.datetime.strptime(PossibleEndTime, datetimeFormat)- datetime.datetime.strptime(NextTimeStamp, datetimeFormat)
