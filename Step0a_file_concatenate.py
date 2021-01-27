@@ -35,14 +35,10 @@ def return_multilevel_df_to_csv(files_list, box_numbers, col_names, selected_dir
 
     for i in range(len(files)):
         f = files[i]
-        # box_num.append(i + 1)  # box_number for outermost level (index)
         df = pd.read_csv(f, sep=":", header=None, names=col_names)   # read_csv can also read in txt files! 
         result.append(df)
 
     multi_df = pd.concat(result, axis=1, keys=box_numbers, names=['Box Number', 'Columns'])
     df_title = os.path.basename(selected_dir_title)  # Returns the lowest directory of path (basename)
-
-    # Saves it within current scope (within this project folder)
-    # multi_df.to_csv(df_title + ".csv")
 
     return multi_df, df_title

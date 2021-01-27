@@ -171,6 +171,8 @@ temp_item_list = list(Counter(temp_file_list).keys())
 no_space_temp_item_list = map(lambda x: x.replace(' ', ''), temp_item_list)
 # Finalize names by replacing '/' with '_'. Store as list.
 final_item_list = list(map(lambda x: x.replace('/', '_'), no_space_temp_item_list))
+# final_item_list contains a list of unique paradigms found in the datafiles, 
+# which may only be a single element.
 
 for f_name in final_item_list:
     
@@ -178,7 +180,7 @@ for f_name in final_item_list:
     if not os.path.isdir(IOUTDIR_temp):  # only create output folder if output link  does not exist 
         os.mkdir(IOUTDIR_temp)
 
-#  Copy files to new rerrange folder 
+#  Copy files to new rearrange folder 
 for j in range(file_count):
     IOUTDIR_temp = os.path.join(IOUTDIR_Rearranged_Data, (temp_file_list[j].replace(' ', '')).replace('/', '_')+'/'+file_name[j])
     shutil.copyfile(files_list[j],IOUTDIR_temp )
@@ -190,10 +192,12 @@ for j in range(file_count):
 #Concatenate raw files into a single output spreadsheet. 
 
 
-# Of course begin by creating necessary directories. 
+# Begin by creating necessary directories. 
 IOUTDIR_Concat_files = os.path.join(IOUTDIR_Analysis_Output, 'Concat_files')  # Path for creating individual participant output folder for saving data
 if not os.path.isdir(IOUTDIR_Concat_files):  # only create output folder if output link  does not exist 
     os.mkdir(IOUTDIR_Concat_files)
+
+# Then iterate over paragdigms and create a single df containing information from all files containing data from that paradigm.
 for f_name in final_item_list:
     IOUTDIR_temp = os.path.join(IOUTDIR_Rearranged_Data, f_name)
     
