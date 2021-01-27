@@ -262,8 +262,7 @@ for run_info_string in final_item_list:
             
             
     #find the latest start time and earliest end time 
-    # TODO 1-22-21: It really seems like datetime ought to be able to be used to pull info from this a little bit more cleanly.
-    
+  
     datetimeFormat = '%Y/%m/%d %H:%M'
 
     # Pull first start date and reformat to match datetimeFormat
@@ -332,39 +331,24 @@ for run_info_string in final_item_list:
         NextTimeStamp = datetime.datetime.strftime(NextTimeStamp, datetimeFormat)
         Timelist.append(NextTimeStamp)
     
-    
-    print('\n\n\n', run_info_string+ "_concat.csv")
-    print('Possible Start Time:', PossibleStartTime)
-    print('Possible End Time:', PossibleEndTime)
-      
+    print(f'''\n\n\n {run_info_string}_concat.csv\n
+           Possible Start Time: {PossibleStartTime}\n
+           Possible End Time: {PossibleEndTime}''')
 
-    # BEGIN HERE ON 1/28/21
-
-    #  add possible extra time providing that the last block of time is within the "ExtraBin" range. 
-    diff = datetime.datetime.strptime(PossibleEndTime, datetimeFormat)- datetime.datetime.strptime(NextTimeStamp, datetimeFormat)
-    TimeinSeconds = diff.days *24 * 3600 + diff.seconds
-    TimeinMinutes = TimeinSeconds /60
-    NumOfHours = TimeinSeconds /3600
-    
-    
-    
-    if(float(ExtraBin)*3600 < TimeinSeconds):  # Add the Extra the rest of the time 
+    #  Add possible extra time if the last block of time is within the "ExtraBin" range. 
+    diff = datetime.datetime.strptime(PossibleEndTime, datetimeFormat) - datetime.datetime.strptime(NextTimeStamp, datetimeFormat)
+    TimeinSeconds = diff.days * 24 * 3600 + diff.seconds
+    if(float(ExtraBin)*3600 < TimeinSeconds): 
         Timelist.append(PossibleEndTime) 
-        print('        <<<<<<<< Extra Time Bin was Exported >>>>>')
-    
-        
+        print('        <<<<<<<< Extra Time Bin was Exported >>>>>')   
     print(Timelist)
        
-    # concat file link to import to function_1 and function_8
-    IOUTDIR_temp = os.path.join(IOUTDIR_Concat_files, run_info_string+ "_concat.csv")
-    print(IOUTDIR_temp) 
-     
+
+    # Path to concat file. Will be passed to analysis functions later. 
+    file_path = os.path.join(IOUTDIR_Concat_files, f"{run_info_string}_concat.csv")
+    print(file_path) 
     #loop through all the timestamps per concat file for function_1
-    count = 0
-    for u in range(len(Timelist)-1):
-        
-  
-        
+    for idx in range(len(Timelist)-1):
         #copied from function_1 call then modified file path, and user input
         
         ## Required Variables! (Start parsetime / End Parsetime)
@@ -372,20 +356,15 @@ for run_info_string in final_item_list:
 
         ## removes leading / trailing whitespaces!! (not in between)  -->
         ## Need to use INPUT functions BEFORE the Tkinter() function (file selection)
-        start_parsetime = (Timelist[count]).strip()
-        end_parsetime = (Timelist[count+1]).strip()
+        start_parsetime = (Timelist[idx]).strip()
+        end_parsetime = (Timelist[idx+1]).strip()
         
         
         # # # # # # Separating INPUT functions from Tkinter function calls
         # # Can't run them together or they'll crash
         
-        
-        ## Pick the file path! (single file (output from Step 0)
-        file_path = select_single_file(IOUTDIR_temp)
-        
         ## Get the multilevel dataframe and the header information
-        multi_df = get_multi_df(file_path)
-        
+        multi_df = pd.read_csv(file_path, header=[0, 1], index_col=[0], low_memory=False)
         ## Final Wrapper Function (#7)
         (m_head_dict, m_parsed_dt_df) = final_m_header_and_parsed_dt_df(multi_df, columns, start_parsetime, end_parsetime)
         
@@ -393,6 +372,9 @@ for run_info_string in final_item_list:
         ## Returns the actual metric_df and the paradigm for that day (determined by start_parsetime input)
         metric_df, paradigm = return_metric_output_df(m_head_dict, m_parsed_dt_df, start_parsetime)
         
+
+
+        # TODO 1/28/2021: Pick up here for the day. 
         ## Print out the start and end times for the 23hr parsing later
         actual_start_end_times(m_head_dict)
         
@@ -402,9 +384,6 @@ for run_info_string in final_item_list:
         
         metric_df.to_csv(IOUTDIR_M_files + '/' + file_title + ".csv")
                 
-
-        
-        count = count+1
         processed_list.append(run_info_string.split("-_-")[-2]+ '  '+ start_parsetime + '   ' + end_parsetime)
         processed_p_list.append(run_info_string.split("-_-")[-2])
         processed_date_list.append(start_parsetime)

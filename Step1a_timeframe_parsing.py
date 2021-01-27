@@ -14,6 +14,12 @@ def get_multi_df(file_path):
 ### 1. Return Multi Header Dictionary
 
 def return_multi_header_dict(multi_df):
+    '''
+    :param multi_df: a multi-indexed data frame containing data from concatenated data spreadsheet.
+    :return m_head_dict: dictionary with Key, Value pairs of Box #, Box Information Dictionary. 
+                         Box Information Dictionary comprises Key, Value pairs of Label, Information. 
+    '''
+
     m_head_dict = {}
     box_numbers = multi_df.columns.levels[0]  # Returns a "Frozen List"
     sorted_box_nums = natsorted(box_numbers)  # outputs a list of sorted box numbers
@@ -46,6 +52,14 @@ def return_multi_header_dict(multi_df):
 ### 2. Return Multi Body Dataframe
 
 def return_multi_body_df(multi_df, columns):
+    '''
+    :param multi_df: a multi-indexed data frame containing data from concatenated data spreadsheet. 
+                    1st level: Box #, 2nd level: [event_code, timestamp, counter] 
+    :param columns: New column names for output dataframe. Typically hardcoded in main run-script.
+    :return m_body_df: An updated version of multi_df that now includes a level containing the event_string
+                       label for the event codes: [event_string, event_cod, timestamp, counter]
+    '''
+
 
     result = []; box_arr = []
     box_numbers = multi_df.columns.levels[0]
@@ -79,27 +93,21 @@ def return_multi_body_df(multi_df, columns):
 ### 3. Get Start End Time
 
 def get_start_end_time(m_head_dict):
-
+    '''
+    :param m_head_dict: multi-dictionary returned by return_multi_header_dict. 
+    :return start_end_time_dict: a dictionary with key, value pairs of box#, tuple containing
+                                 start and end times (in that order) as datetime objects. 
+    '''
     start_end_time_dict = {}
-
-    box_numbers = list(m_head_dict)   # keys of the header dictionary --> box numbers
-    for i in range(len(box_numbers)):
-        box_num = box_numbers[i]
-
+    for box_num in m_head_dict.keys():
         # Start Datetime
-        start_datetime = m_head_dict[box_num]['Start Date'] + " " + m_head_dict[box_num]['Start Time']
-        start_datetime = start_datetime.replace("-",":")
-
-        # End Datetime
-        end_datetime = m_head_dict[box_num]['End Date']  + " " + m_head_dict[box_num]['End Time']
-        end_datetime = end_datetime.replace("-",":")
-
+        start_datetime = f'{m_head_dict[box_num]["Start Date"]} {m_head_dict[box_num]["Start Time"]}'.replace('-', ':')
         start_time = datetime.strptime(start_datetime, '%m/%d/%Y %H:%M:%S')
+        # End Datetime
+        end_datetime = f'{m_head_dict[box_num]["End Date"]} {m_head_dict[box_num]["End Time"]}'.replace('-', ':')
         end_time = datetime.strptime(end_datetime, '%m/%d/%Y %H:%M:%S')
 
-        start_end_time_dict[box_num] = (start_time, end_time)  # saves it as a tuple of datetimes
-        # print(start_time, end_time)
-
+        start_end_time_dict[box_num] = (start_time, end_time)
     return start_end_time_dict
 
 
@@ -107,7 +115,13 @@ def get_start_end_time(m_head_dict):
 ### 4. Return Multi Datetime Dataframe
 
 def return_multi_dt_df(m_head_dict, m_body_df, start_end_time_dict):
-
+    '''
+    :param m_head_dict: dictionary output of return_multi_header_dict.
+    :param m_body_df: DataFrame output of return_multi_body_df
+    :param start_end_time_dict: dictionary output of get_start_end_time
+    :return m_dt_df: an expanded version of m_body_df with the following levels
+                    at each level of Box#: [event_string, event_cod, timestamp, counter, datetime_realtime, day, hour]
+    '''
     result = []; box_arr = list(m_body_df.columns.levels[0])
     midx_shape = m_body_df.columns.levshape   # (returns a tuple)
 
@@ -141,7 +155,12 @@ def return_multi_dt_df(m_head_dict, m_body_df, start_end_time_dict):
 ### 5. Fill Counter Datetime Column --> fill in datetime for counter value columns
 
 def fill_counter_datetime_col(m_dt_df):
-
+    '''
+    :param m_dt_df: multi-index dataframe returned by return_multi_dt_df.
+    :return m_dt_df_imputed: An almost identical dataframe with timestamps now included
+                             for counter variables in datetime_filled. In m_dt_df only 
+                             non-counter variables had timestamps. 
+    '''
     result = []; box_arr = list(m_dt_df.columns.levels[0])
     # midx_shape = m_dt_df.columns.levshape   # (returns a tuple)
 
@@ -182,6 +201,14 @@ def fill_counter_datetime_col(m_dt_df):
 ### 6. Return Multi Parsed Datetime Dataframe
 
 def return_multi_parsed_dt_df(m_dt_df_imputed, start_parsetime, end_parsetime):
+    '''
+    :param m_dt_df_imputed: multi-index dataframe returned by fill_counter_datetime_col.
+    :param start_parsetime: Time and date from which to start slicing (string format, 'YYYY/mm/dd HH:MM')
+    :param end_parsetime: Time and date at which to stop slicing (same format).
+    :return m_parsed_dt_df: a slice of m_dt_df_imputed containing data from all boxes
+                            between start_parsetime and end_parsetime. 
+    '''
+
 
     # # Parse Time Criteria for all files (boxes)
     start_dt = datetime.strptime(start_parsetime, '%Y/%m/%d %H:%M')

@@ -18,10 +18,13 @@ delay_window = ['7559','8559','9559']
 
 def return_metric_output_df(m_head_dict, m_parsed_dt_df, start_parsetime):
     """
-    :param m_head_dict:
-    :param m_parsed_dt_df:
-    :param start_parsetime:
-    :return:
+    :param m_head_dict: Dictionary from Step1a_timeframe_parsing.return_multi_header_dict(). 
+                        Key: value pairs of Box #: Box information Dictionary. 
+    :param m_parsed_dt_df: A multi-index dataframe containing event information for each box from a 
+                           specified timebin. 
+    :param start_parsetime: A date string (format: '%Y/%m/%d %H:%M') indicating when to start performing analysis.
+    :return metric_df: multi-index dataframe containing count information for various metrics in the Left, Center, and Right
+                       port for each box. 
     """
 
     ## Getting the accurate paradigm (going to use 'mode' method since different Arduinos can run on different schedule)
