@@ -338,6 +338,8 @@ for run_info_string in final_item_list:
     print('Possible End Time:', PossibleEndTime)
       
 
+    # BEGIN HERE ON 1/28/21
+
     #  add possible extra time providing that the last block of time is within the "ExtraBin" range. 
     diff = datetime.datetime.strptime(PossibleEndTime, datetimeFormat)- datetime.datetime.strptime(NextTimeStamp, datetimeFormat)
     TimeinSeconds = diff.days *24 * 3600 + diff.seconds
