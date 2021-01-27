@@ -187,16 +187,16 @@ for j in range(file_count):
 ###################################
 #   Step_0a_file_concatenate.py   #
 ###################################
+#Concatenate raw files into a single output spreadsheet. 
 
 
-#  Call functions from step0a_file_concatenate to concatenate raw files into a single output spreadsheet. 
-IOUTDIR_Concat_files = os.path.join(IOUTDIR_Analysis_Output, 'Concat_files')  # Path for creating individual particpant output folder for saving data
+# Of course begin by creating necessary directories. 
+IOUTDIR_Concat_files = os.path.join(IOUTDIR_Analysis_Output, 'Concat_files')  # Path for creating individual participant output folder for saving data
 if not os.path.isdir(IOUTDIR_Concat_files):  # only create output folder if output link  does not exist 
     os.mkdir(IOUTDIR_Concat_files)
-for k in range(len(temp_item_list)):
-    IOUTDIR_temp = os.path.join(IOUTDIR_Rearranged_Data, final_item_list[k])
+for f_name in final_item_list:
+    IOUTDIR_temp = os.path.join(IOUTDIR_Rearranged_Data, f_name)
     
-    #  modified from Step0F_Function_Calls 
     # # Directory Selection
     (files_list, selected_dir_title) = select_all_files_in_directory_works_with_RunMe(IOUTDIR_temp)
     box_numbers = get_box_numbers(files_list)

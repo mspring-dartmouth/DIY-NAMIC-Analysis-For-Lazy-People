@@ -61,7 +61,7 @@ def select_all_files_in_directory():
 
 ## Returns EVERY single file in the directory
 
-def select_all_files_in_directory_works_with_RunMe(runme_Path):
+def select_and_sort_directory_contents(runme_Path):
     """
     :USER INPUT: extension type --> wrong extension type will result in EMPTY list
     :return: (files_list, dir_title) --> list of all the flies within selected directory
