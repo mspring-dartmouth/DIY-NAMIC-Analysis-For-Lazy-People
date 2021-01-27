@@ -212,39 +212,33 @@ for f_name in final_item_list:
     df.to_csv(os.path.join(IOUTDIR_Concat_files, "{}_concat.csv".format(title)))
 
 
-    ################## Path for Subfolders
-# file_count
-# file_name
-# file_info
-# final_item_list
+###################################
+#        Latency Analysis         #
+###################################
 
-IOUTDIR_M_files = os.path.join(IOUTDIR_Analysis_Output, 'M_files')  # Path for creating individual particpant output folder for saving data
-if not os.path.isdir(IOUTDIR_M_files):  # only create output folder if output link  does not exist 
-    os.mkdir(IOUTDIR_M_files)
+# Create output directories to store individual participant files AND 
+# store file paths as variables for use in later code. 
 
-IOUTDIR_Latency_Response = os.path.join(IOUTDIR_Analysis_Output, 'Latency_Response')  # Path for creating individual particpant output folder for saving data
-if not os.path.isdir(IOUTDIR_Latency_Response):  # only create output folder if output link  does not exist 
-    os.mkdir(IOUTDIR_Latency_Response)
+IOUTDIR_M_files = os.path.join(IOUTDIR_Analysis_Output, 'M_files')  
+IOUTDIR_Latency_Response = os.path.join(IOUTDIR_Analysis_Output, 'Latency_Response')  
+IOUTDIR_Latency_Retrieval = os.path.join(IOUTDIR_Analysis_Output, 'Latency_Retrieval')  
+IOUTDIR_Latency_Initiation = os.path.join(IOUTDIR_Analysis_Output, 'Latency_Initiation')  
 
-IOUTDIR_Latency_Retrieval = os.path.join(IOUTDIR_Analysis_Output, 'Latency_Retrieval')  # Path for creating individual particpant output folder for saving data
-if not os.path.isdir(IOUTDIR_Latency_Retrieval):  # only create output folder if output link  does not exist 
-    os.mkdir(IOUTDIR_Latency_Retrieval)
-
-IOUTDIR_Latency_Initiation = os.path.join(IOUTDIR_Analysis_Output, 'Latency_Initiation')  # Path for creating individual particpant output folder for saving data
-if not os.path.isdir(IOUTDIR_Latency_Initiation):  # only create output folder if output link  does not exist 
-    os.mkdir(IOUTDIR_Latency_Initiation)
+for directory in [IOUTDIR_M_files, IOUTDIR_Latency_Response, IOUTDIR_Latency_Retrieval, IOUTDIR_Latency_Initiation]:
+    if not os.path.isdir(directory): 
+        os.mkdir(directory)
 
 processed_list = []
 processed_p_list = []
 processed_date_list = []
 
-for j in range(len(final_item_list)): # run through each concat file
+# Iterate over concat files by iterating over info strings in final_item_list.
+# info string format: PARADIGMNAME-_-MM_DD_YYYY
+for run_info_string in final_item_list:
     
-    
-    
-    # split final_item_list
-    TempParadigm = final_item_list[j].split("-_-")[-2]
-    TempDate =  (final_item_list[j].split("-_-")[-1]).replace('_', '/')
+    # Pull out paradigm name and date from run_info_string
+    TempParadigm = run_info_string.split("-_-")[0]
+    TempDate =  (run_info_string.split("-_-")[1]).replace('_', '/')
     
      # grab individual csv header info for each concat file
     TempStartDate = []
@@ -254,8 +248,10 @@ for j in range(len(final_item_list)): # run through each concat file
     
 
     for i in range(file_count):
-        if(((file_info['Start Date'][i]).replace(' ', '') == TempDate) & ((file_info['Paradigm'][i]).replace(' ', '') == TempParadigm)): #  copy vales from file_info if paradigm and date matches 
+        # Check the date and paradigm for each file against the date and paradigm for the current loop.
+        if(((file_info['Start Date'][i]).replace(' ', '') == TempDate) & ((file_info['Paradigm'][i]).replace(' ', '') == TempParadigm)):
             
+            # If they match, store the start and end times from the file.
             TempStartDate.append((file_info['Start Date'][i]).replace(' ', ''))
             TempStartTime .append((file_info['Start Time'][i]).replace(' ', ''))
             TempEndDate.append((file_info['End Date'][i]).replace(' ', ''))
@@ -269,27 +265,58 @@ for j in range(len(final_item_list)): # run through each concat file
     # TODO 1-22-21: It really seems like datetime ought to be able to be used to pull info from this a little bit more cleanly.
     
     datetimeFormat = '%Y/%m/%d %H:%M'
-    ReferenceTime = TempStartDate[0].split("/")[-1] + '/' + TempStartDate[0].split("/")[-3] + "/" + TempStartDate[0].split("/")[-2] + ' '+ '00:00'
+
+    # Pull first start date and reformat to match datetimeFormat
+    ref_date_as_datetime = datetime.datetime.strptime(TempStartDate[0], '%m/%d/%Y')
+    ReferenceTime = '{} 00:00'.format(datetime.datetime.strftime(ref_date_as_datetime, '%Y/%m/%d'))
+    ref_time_as_datetime = datetime.datetime(ReferenceTime, datetimeFormat)
+
+    # Determine the time between reference and the start time of each file.
     TempDurationSeconds = []
+    # Initiate a storage variable to keep track of max value. Negative initial value is guaranteed to be lower. 
+    max_time = -1 
     for k in range(len(TempStartDate)):
-        TestTime = TempStartDate[k].split("/")[-1] + '/' + TempStartDate[k].split("/")[-3] + "/" + TempStartDate[k].split("/")[-2] + ' '+ (TempStartTime[k].replace('-', ':')).split(":")[-3] + ":" + (TempStartTime[k].replace('-', ':')).split(":")[-2]
-        diff = datetime.datetime.strptime(TestTime, datetimeFormat)- datetime.datetime.strptime(ReferenceTime, datetimeFormat)
-        TimeinSeconds = diff.days *24 * 3600 + diff.seconds
-        TempDurationSeconds.append(TimeinSeconds)
-    
-    P = TempDurationSeconds.index(max(TempDurationSeconds))  # position with earliest start time 
-    PossibleStartTime = TempStartDate[P].split("/")[-1] + '/' + TempStartDate[P].split("/")[-3] + "/" + TempStartDate[P].split("/")[-2] + ' '+ (TempStartTime[P].replace('-', ':')).split(":")[-3] + ":" + (TempStartTime[P].replace('-', ':')).split(":")[-2]
-    
-    TempDurationSeconds = []
+        # Create datetime object from date and time of current iteration.
+        curr_date_as_datetime = datetime.datetime.strptime(TempStartDate[k], '%m/%d/%Y')
+        curr_time_as_datetime = datetime.datetime.strptime(TempStartTime[k], '%H-%M-%S').time()
+        TestTime = datetime.datetime.combine(curr_date_as_datetime, curr_time_as_datetime)
+        
+        # Do the math and convert to seconds. 
+        diff = TestTime - ref_time_as_datetime
+        TimeinSeconds = diff.days * 24 * 3600 + diff.seconds
+
+        # Check if it's the max and store it as a possible start time if it is.
+        if TimeinSeconds > max_time:
+            max_time = TimeinSeconds
+            PossibleStartTime = datetime.datetime.strftime(TestTime, datetimeFormat)
+
+
+
+    # Min time is tracked using a different method. See loop.
     for l in range(len(TempEndDate)):
-        TestTime = TempEndDate[l].split("/")[-1] + '/' + TempEndDate[l].split("/")[-3] + "/" + TempEndDate[l].split("/")[-2] + ' '+ (TempEndTime[l].replace('-', ':')).split(":")[-3] + ":" + (TempEndTime[l].replace('-', ':')).split(":")[-2]
-        diff = datetime.datetime.strptime(TestTime, datetimeFormat)- datetime.datetime.strptime(ReferenceTime, datetimeFormat)
-        TimeinSeconds = diff.days *24 * 3600 + diff.seconds
-        TempDurationSeconds.append(TimeinSeconds)
-    
-    PP = TempDurationSeconds.index(min(TempDurationSeconds))  # position with earliest start time 
-    PossibleEndTime = TempEndDate[PP].split("/")[-1] + '/' + TempEndDate[PP].split("/")[-3] + "/" + TempEndDate[PP].split("/")[-2] + ' '+ (TempEndTime[PP].replace('-', ':')).split(":")[-3] + ":" + (TempEndTime[PP].replace('-', ':')).split(":")[-2]
-    
+        curr_date_as_datetime = datetime.datetime.strptime(TempEndDate[l], '%m/%d/%Y')
+        curr_time_as_datetime = datetime.datetime.strptime(TempEndTime[l], '%H-%M-%S').time()
+        TestTime = datetime.datetime.combine(curr_date_as_datetime, curr_time_as_datetime)
+        diff = TestTime - ref_time_as_datetime
+        TimeinSeconds = diff.days * 24 * 3600 + diff.seconds
+
+        # Next check if it's the minimum value:
+        try:
+            if TimeinSeconds < min_time:
+                curr_time_is_min = True
+            else:
+                curr_time_is_min = False
+        except NameError:
+            # If min_time does not exist, it's the first loop. Store current time as min_time. 
+            # NB: min_time cannot be instantiated with an arbitrary value because it cannot be
+            # guaranteed to be greater than all possible values of TimeinSeconds. 
+            curr_time_is_min = True
+
+        if curr_time_is_min:
+            min_time = TimeinSeconds
+            PossibleEndTime = datetime.datetime.strftime(TestTime, datetimeFormat)
+
+
  
     # Export data in bin (23 hour blocks), last block is whatever time left until Possible End time. 
     diff = datetime.datetime.strptime(PossibleEndTime, datetimeFormat)- datetime.datetime.strptime(PossibleStartTime, datetimeFormat)
@@ -308,11 +335,12 @@ for j in range(len(final_item_list)): # run through each concat file
         NextTimeStamp =((str(NextTimeStamp).split(" ")[-2]).replace('-', '/') + ' ' +  (str(NextTimeStamp).split(" ")[-1]).split(":")[-3] + ":" + (str(NextTimeStamp).split(" ")[-1]).split(":")[-2])
     
     
-    print('\n\n\n', final_item_list[j]+ "_concat.csv")
+    print('\n\n\n', run_info_string+ "_concat.csv")
     print('Possible Start Time:', PossibleStartTime)
     print('Possible End Time:', PossibleEndTime)
     
-    
+
+    ### STOP HERE FOR THE DAY 1/27/21    
 
     #  add possible extra time providing that the last block of time is within the "ExtraBin" range. 
     diff = datetime.datetime.strptime(PossibleEndTime, datetimeFormat)- datetime.datetime.strptime(NextTimeStamp, datetimeFormat)
@@ -330,7 +358,7 @@ for j in range(len(final_item_list)): # run through each concat file
     print(Timelist)
        
     # concat file link to import to function_1 and function_8
-    IOUTDIR_temp = os.path.join(IOUTDIR_Concat_files, final_item_list[j]+ "_concat.csv")
+    IOUTDIR_temp = os.path.join(IOUTDIR_Concat_files, run_info_string+ "_concat.csv")
     print(IOUTDIR_temp) 
      
     #loop through all the timestamps per concat file for function_1
@@ -379,8 +407,8 @@ for j in range(len(final_item_list)): # run through each concat file
 
         
         count = count+1
-        processed_list.append(final_item_list[j].split("-_-")[-2]+ '  '+ start_parsetime + '   ' + end_parsetime)
-        processed_p_list.append(final_item_list[j].split("-_-")[-2])
+        processed_list.append(run_info_string.split("-_-")[-2]+ '  '+ start_parsetime + '   ' + end_parsetime)
+        processed_p_list.append(run_info_string.split("-_-")[-2])
         processed_date_list.append(start_parsetime)
     #loop through all the timestamps per concat file for function_8 with latency_choice = response 
     counttwo = 0
@@ -410,8 +438,8 @@ for j in range(len(final_item_list)): # run through each concat file
         group_number_input = ("g5").strip().lower()
         start_parsetime = (Timelist[counttwo]).strip()
         end_parsetime = (Timelist[counttwo+1]).strip()
-        #paradigm = (((final_item_list[j]).split("-")[0]).replace('P', '')).strip()
-        paradigm = re.split('-|_',final_item_list[j])[0].replace('P', '').strip()  #  allows P5-5 or P5_5  "-" or "_" labeling 
+        #paradigm = (((run_info_string).split("-")[0]).replace('P', '')).strip()
+        paradigm = re.split('-|_',run_info_string)[0].replace('P', '').strip()  #  allows P5-5 or P5_5  "-" or "_" labeling 
         paradigm = int(paradigm)
         print('\nParadigm number for latency code (response) is ...', paradigm)
         latency_choice = ('response').strip().lower()
@@ -451,7 +479,7 @@ for j in range(len(final_item_list)): # run through each concat file
             # Objective: In order to concatenate the latency files later!
             
             #save_title = IOUTDIR_Latency_Response + '/' + start_parsetime[:10].replace("/","-") + "_latency_Response.xlsx"
-            save_title = IOUTDIR_Latency_Response + '/' + final_item_list[j].split('-_-')[0] + '_'+ ((start_parsetime.replace('/','_')).replace(' ','-')).replace(':','_') + "_latency_Response.xlsx"
+            save_title = IOUTDIR_Latency_Response + '/' + run_info_string.split('-_-')[0] + '_'+ ((start_parsetime.replace('/','_')).replace(' ','-')).replace(':','_') + "_latency_Response.xlsx"
    
             
             plot_df = convert_to_long_format(m_latency_df)
@@ -515,8 +543,8 @@ for j in range(len(final_item_list)): # run through each concat file
         group_number_input = ("g5").strip().lower()
         start_parsetime = (Timelist[counttwo]).strip()
         end_parsetime = (Timelist[counttwo+1]).strip()
-        #paradigm = (((final_item_list[j]).split("-")[0]).replace('P', '')).strip()
-        paradigm = re.split('-|_',final_item_list[j])[0].replace('P', '').strip()  #  allows P5-5 or P5_5  "-" or "_" labeling 
+        #paradigm = (((run_info_string).split("-")[0]).replace('P', '')).strip()
+        paradigm = re.split('-|_',run_info_string)[0].replace('P', '').strip()  #  allows P5-5 or P5_5  "-" or "_" labeling 
         paradigm = int(paradigm)
         print('\nParadigm number for latency code (retrieval) is ...', paradigm)
         latency_choice = ('retrieval').strip().lower()
@@ -556,7 +584,7 @@ for j in range(len(final_item_list)): # run through each concat file
             # Objective: In order to concatenate the latency files later!
             
             #save_title = IOUTDIR_Latency_Retrieval + '/' + start_parsetime[:10].replace("/","-") + "_latency_Retrieval.xlsx"
-            save_title = IOUTDIR_Latency_Retrieval + '/' + final_item_list[j].split('-_-')[0] + '_'+ ((start_parsetime.replace('/','_')).replace(' ','-')).replace(':','_') + "_latency_Retrieval.xlsx"
+            save_title = IOUTDIR_Latency_Retrieval + '/' + run_info_string.split('-_-')[0] + '_'+ ((start_parsetime.replace('/','_')).replace(' ','-')).replace(':','_') + "_latency_Retrieval.xlsx"
    
             
             plot_df = convert_to_long_format(m_latency_df)
@@ -619,8 +647,8 @@ for j in range(len(final_item_list)): # run through each concat file
         group_number_input = ("g5").strip().lower()
         start_parsetime = (Timelist[counttwo]).strip()
         end_parsetime = (Timelist[counttwo+1]).strip()
-        #paradigm = (((final_item_list[j]).split("-")[0]).replace('P', '')).strip()
-        paradigm = re.split('-|_',final_item_list[j])[0].replace('P', '').strip()  #  allows P5-5 or P5_5  "-" or "_" labeling 
+        #paradigm = (((run_info_string).split("-")[0]).replace('P', '')).strip()
+        paradigm = re.split('-|_',run_info_string)[0].replace('P', '').strip()  #  allows P5-5 or P5_5  "-" or "_" labeling 
         paradigm = int(paradigm)
         print('\nParadigm number for latency code (initiation) is ...', paradigm)
         latency_choice = ('initiation').strip().lower()
@@ -660,7 +688,7 @@ for j in range(len(final_item_list)): # run through each concat file
             # Objective: In order to concatenate the latency files later!
             
             #save_title = IOUTDIR_Latency_Initiation + '/' + start_parsetime[:10].replace("/","-") + "_latency_Initiation.xlsx"
-            save_title = IOUTDIR_Latency_Initiation + '/' + final_item_list[j].split('-_-')[0] + '_'+ ((start_parsetime.replace('/','_')).replace(' ','-')).replace(':','_') + "_latency_Initiation.xlsx"
+            save_title = IOUTDIR_Latency_Initiation + '/' + run_info_string.split('-_-')[0] + '_'+ ((start_parsetime.replace('/','_')).replace(' ','-')).replace(':','_') + "_latency_Initiation.xlsx"
             
             plot_df = convert_to_long_format(m_latency_df)
             plot_df['Group'] = group   # Adding Group Information!
@@ -692,10 +720,6 @@ for j in range(len(final_item_list)): # run through each concat file
 
         
             counttwo = counttwo+1
-
-
-# STOP HERE FOR THE DAY ON 1/26/21
-
         
 # run step_2 Function call (copied from Step2F_Function)
     
@@ -775,7 +799,7 @@ print(f'\n\n Your Analysis Output is located in {OUTDIR}')
     
     
     #  concat file link to import to function_1
-    # IOUTDIR_temp = os.path.join(IOUTDIR_Concat_files, final_item_list[j]+ "_concat.csv")
+    # IOUTDIR_temp = os.path.join(IOUTDIR_Concat_files, run_info_string+ "_concat.csv")
     # print(IOUTDIR_temp)
     
     # pull information from file_info 
