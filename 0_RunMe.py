@@ -209,8 +209,7 @@ for f_name in final_item_list:
     (df, title) = return_multilevel_df_to_csv(files_list, box_numbers, col_names, selected_dir_title)
 
     # # Saves the dataframe at THIS stage (otherwise Pycharm crashes if I try to save it without returning the df first!)
-    #df.to_csv(title + "_concat.csv")
-    df.to_csv(IOUTDIR_Concat_files+ '/'+ title + "_concat.csv")
+    df.to_csv(os.path.join(IOUTDIR_Concat_files, "{}_concat.csv".format(title)))
 
 
     ################## Path for Subfolders
