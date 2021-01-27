@@ -14,7 +14,7 @@ from Step1c_paradigm_metrics import *
 from Step2a_combine_and_categorize_by_metrics import *
 from Step8b_latency import *
 from Tkinter_Selection_Ka_Modified import select_all_files_in_directory
-from Tkinter_Selection_Ka_Modified import select_all_files_in_directory_works_with_RunMe
+from Tkinter_Selection_Ka_Modified import select_and_sort_directory_contents
 from Tkinter_Selection_Ka_Modified import select_single_dir
 from Tkinter_Selection_Ka_Modified import select_single_file
 
@@ -198,7 +198,7 @@ for f_name in final_item_list:
     IOUTDIR_temp = os.path.join(IOUTDIR_Rearranged_Data, f_name)
     
     # # Directory Selection
-    (files_list, selected_dir_title) = select_all_files_in_directory_works_with_RunMe(IOUTDIR_temp)
+    (files_list, selected_dir_title) = select_and_sort_directory_contents(IOUTDIR_temp)
     box_numbers = get_box_numbers(files_list)
 
     # # returns multi_df and its future title

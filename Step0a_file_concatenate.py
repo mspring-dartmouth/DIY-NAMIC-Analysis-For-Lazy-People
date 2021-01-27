@@ -12,17 +12,12 @@ def get_box_numbers(files_list):
     """
     box_num_list = []
 
-    file_count = len(files_list)
-
-    for i in range(file_count):
-        full_path = files_list[i]
+    for full_path in files_list:
         file_name = full_path.split("/")[-1]  # File name is always the last in the list
 
         # Do NOT change the filename format (from Processing side) - Unless you want to change the regex below!
         # Regex
-        box = re.findall(r'box\d+', file_name)[0]  # Returns box and number in string ex)"box7"
-        box_num = re.findall(r'\d+', box)[0]  # Returns only the number in string ex) "7"
-
+        box_num = re.findall(r'(?<=box)\d+', file_name)[0]  # Returns number following string "box" as a string
         box_num_list.append(box_num)
 
     return box_num_list
