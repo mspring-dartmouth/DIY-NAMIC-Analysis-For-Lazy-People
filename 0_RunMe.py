@@ -373,7 +373,7 @@ for run_info_string in final_item_list:
         metric_df, paradigm = return_metric_output_df(m_head_dict, m_parsed_dt_df, start_parsetime)
         
 
-
+ 
         # TODO 1/28/2021: Pick up here for the day. 
         ## Print out the start and end times for the 23hr parsing later
         actual_start_end_times(m_head_dict)
