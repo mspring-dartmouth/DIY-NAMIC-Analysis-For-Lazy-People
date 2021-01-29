@@ -317,10 +317,12 @@ for subject in intermediate_DataFrame.index:
 # columns will be that of smoothed_DataFrame. 
 graphing_groups = []
 all_factor_levels = []
+main_effect_legend_labels = {}
 # Begin with main effects:
 for factor in group_variables:
 	levels = set(subject_info_master_df.loc[:, factor])
 	all_factor_levels.append(levels)
+	main_effect_legend_labels[factor] = list(levels)
 	for level in levels:
 		graphing_groups.append(level)
 
@@ -360,6 +362,8 @@ graphing_DataFrame.sort_index(axis=0, level=['Group', 'Stat'], ascending=True, i
 retyping_dict = list(itertools.product(*[paradigms, ['float64']]))
 retyping_dict.extend(list(itertools.product(*[group_variables], ['category'])))
 retyping_dict = dict(retyping_dict)
+
+two_way_effect_legend_labels = {}
 for metric in metrics:
 	# Pull all levels of the Paradigm_Group_info for a given metric as floats and categories. 
 	temp_DataFrame = intermediate_DataFrame.loc[:, metric].astype(retyping_dict)
@@ -391,11 +395,31 @@ for metric in metrics:
 			graphing_DataFrame.loc[(str_group_combo, 'Mean'), (metric)] = big_grouped_mean.loc[group_combo].values
 			graphing_DataFrame.loc[(str_group_combo, 'SEM'), (metric)] = big_grouped_SEM.loc[group_combo].values
 
+			# This will come in handy for graphing later.
+			two_way_effect_legend_labels[str_group_combo] = group_combo
 	else:
 		# Put a holder in until we figure out how to deal with this.
 		print("Sorry, I'm not yet equipped to graph 3 factors. Coming soon!")
 
 
+
+# Save all your dataframes before moving on to graphing. 
+
+master_DataFrame.to_csv('All_Animals_Over_All_Days.csv')
+intermediate_DataFrame.to_csv('All_Animals_Smoothed_Over_Paradigms.csv')
+graphing_DataFrame.to_csv('Group_Means_and_SEMS.csv')
+
 ################################
 #   Graph individual Behavior  #
 ################################
+
+
+# for metric in metrics:
+# 	plt.figure(metric)
+# 	for grp in two_way_effect_legend_labels.keys():
+# 		plt.errorbar(x = range(len(paradigms)), y=graphing_DataFrame.loc[(grp, 'Mean'), (metric)], yerr=graphing_DataFrame.loc[(grp, 'SEM'), (metric)])
+# for metric in ['trials_reward']:
+# 	for factor in main_effect_legend_labels.keys():
+# 		plt.figure(factor)
+# 		for level in main_effect_legend_labels[factor]:
+# 			plt.errorbar(x = range(len(paradigms)), y=graphing_DataFrame.loc[(level, 'Mean'), (metric)], yerr=graphing_DataFrame.loc[(level, 'SEM'), (metric)])
