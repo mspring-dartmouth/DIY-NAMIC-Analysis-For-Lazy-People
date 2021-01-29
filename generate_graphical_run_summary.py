@@ -26,6 +26,7 @@ from natsort import natsorted
 import sys
 import tkinter
 import Tkinter_Selection_Ka_Modified as gui_select
+import itertools
 
 
 
@@ -233,7 +234,7 @@ if continue_script == 'n':
 
 
 ################################
-#    Create master DataFrame   #
+#   Create master DataFrames   #
 ################################
 # Index = Subject variable selected above. 
 # Columns = multiindex with levels Metric, Paradigm, Day
@@ -284,3 +285,81 @@ for metric in metrics:
 	for paradigm in paradigms:
 		for subject in smoothed_DataFrame.index:
 			smoothed_DataFrame.loc[subject, (metric, paradigm)] = master_DataFrame.loc[subject, (metric, paradigm, slice(None))].mean()
+
+
+# The final DataFrame to make is one that contains grouping information. 
+# As an intermediate, we'll add such grouping information as a level underneath metric, tacked on to the end of paradigm. 
+paradigms_plus_groups = paradigms.copy()
+paradigms_plus_groups.extend(group_variables) 
+intermediate_DF_multiindex = pd.MultiIndex.from_product((metrics, paradigms_plus_groups), names=['Metric', 'Paradigm_Group_info'])
+# The intermediate DataFrame will then permit the use of the group_by method to easily create the final graphing dataframe. 
+intermediate_DataFrame = pd.DataFrame(index=subject_info_master_df.index, columns=intermediate_DF_multiindex)
+intermediate_DataFrame.sort_index(axis=1, level=['Metric', 'Paradigm_Group_info'], ascending=True, inplace=True)
+
+# Put all the actual data in at the indices that they have in common. 
+intermediate_DataFrame.loc[:, (slice(None), paradigms)] = smoothed_DataFrame.loc[:, :]
+# Then iterate over subjects and populate the grouping information. 
+for subject in intermediate_DataFrame.index:
+	for group_var in group_variables:
+		# Places the subject variable value into each Paradigm. 
+		intermediate_DataFrame.loc[subject, (slice(None), group_var)] = subject_info_master_df.loc[subject, group_var]
+
+# Finally, create a DataFrame that displays the mean and SEM for each "group" across paradigms within each metric. 
+# The number of groups will be determined by the number of grouping variables and the levels of those grouping variables. 
+# You will want Main Effects and Interaction comparisons. E.g. Male (all) and Female (all) as well as Male/Cre+ vs. Male/Cre-. 
+
+
+#Create Index for Graphing DF:
+###############################
+
+# Begin this step by determining the relevant levels. These will form the first level of the multi-index index. The multi-index for 
+# columns will be that of smoothed_DataFrame. 
+graphing_groups = []
+all_factor_levels = []
+# Begin with main effects:
+for factor in group_variables:
+	levels = set(subject_info_master_df.loc[:, factor])
+	all_factor_levels.append(levels)
+	for level in levels:
+		graphing_groups.append(level)
+
+# Then get the individual combinations. 
+# First by getting a list of lists containing all levels of each factor. 
+# all_factor_levels. See above. 
+# Then produce all possible combinations of those using itertools. 
+
+# If you have 3 factors, you will want 2 way and 3 way groups. 
+# If you have more than 3 factors, get out of here. I'm not dealing with your complexity.
+if len(all_factor_levels)>2:	
+	# Iterate over pairs of factor lists. 
+	for factor_combo in itertools.combinations(all_factor_levels, 2):
+		# Then iterate over all combinations of the items in those lists.	
+		for group_combo in itertools.product(*factor_combo):
+			# group_combo will be a tuple. Store it as a string with '_' separating factor levels.
+			graphing_groups.append('_'.join(group_combo))
+
+# Finally, you'll want all possible combinations of factor levels, regardless of factor number. 
+for group_combo in itertools.product(*all_factor_levels):
+	graphing_groups.append('_'.join(group_combo))
+
+
+# Create Graphing DF:
+#######################
+
+graphing_group_index = pd.MultiIndex.from_product(graphing_groups, ['Mean', 'SEM'], names=['Group', 'Stat'])
+
+graphing_DataFrame = pd.DataFrame(index = graphing_group_index, columns = smoothed_DataFrame.columns)
+# Columns are already sorted because we recycled from smoothed_DataFrame. 
+graphing_DataFrame.sort_index(axis=0, level=['Mean', 'SEM'], ascending=True, inplace=True) # Still sort index.
+
+# Now we populate it. 
+
+# The question is how to dynamically code the group_by statement. 
+
+
+
+
+
+################################
+#   Graph individual Behavior  #
+################################
