@@ -25,8 +25,8 @@ import matplotlib.pyplot as plt
 from natsort import natsorted
 import sys
 import tkinter
-import Tkinter_Selection_Ka_Modified as gui_select
 import itertools
+import Tkinter_Selection_Ka_Modified as gui_select
 
 
 
@@ -172,7 +172,7 @@ tkinter.mainloop()
 # Create a boolean indexer array based on the values in group_vars_dict
 
 indexer_array = np.array(list(map(lambda x: group_vars_dict[x].get(), temp_df.index)))
-group_variables = temp_df.index[indexer_array]
+group_variables = list(temp_df.index[indexer_array])
 subject_info_master_df = pd.DataFrame(index = range(len(subject_files)), columns=group_variables)
 
 # Figure out the subject variable by checking for the one true variable.  
@@ -255,7 +255,8 @@ highest_day = 1
 
 column_multiindex = pd.MultiIndex.from_product((metrics, paradigms, days), names=['Metric', 'Paradigm', 'Day'])
 
-master_DataFrame = pd.DataFrame(index = subject_info_master_df.index, columns = column_multiindex)
+# Force consistency in index element format by explicitly setting as strings.
+master_DataFrame = pd.DataFrame(index = list(map(str, subject_info_master_df.index)), columns = column_multiindex)
 master_DataFrame.sort_index(axis=1, level=['Metric', 'Paradigm', 'Day'], ascending=True, inplace=True)
 
 # Now we populate. 
@@ -270,7 +271,7 @@ for paradigm_num, m_file in enumerate(m_files):
 		# and can be skipped. Data from actual run days ought to start at Column C. Grab 10 just to be safe. 
 		for subject_id in temp_metric_df.index:
 			for day, date in enumerate(temp_metric_df.columns, start=1):
-				master_DataFrame.loc[subject_id, (metric, paradigm, day)] = temp_metric_df.loc[subject_id, date]
+				master_DataFrame.loc[str(subject_id), (metric, paradigm, day)] = temp_metric_df.loc[subject_id, date]
 				if day > highest_day:
 					highest_day = day
 
@@ -342,22 +343,57 @@ if len(all_factor_levels)>2:
 for group_combo in itertools.product(*all_factor_levels):
 	graphing_groups.append('_'.join(group_combo))
 
-
 # Create Graphing DF:
 #######################
+# This whole section is pretty sloppy. It reuses too much of the same logic as above, which feels inefficient. 
 
-graphing_group_index = pd.MultiIndex.from_product(graphing_groups, ['Mean', 'SEM'], names=['Group', 'Stat'])
+graphing_group_index = pd.MultiIndex.from_product([graphing_groups, ['Mean', 'SEM']], names=['Group', 'Stat'])
 
 graphing_DataFrame = pd.DataFrame(index = graphing_group_index, columns = smoothed_DataFrame.columns)
 # Columns are already sorted because we recycled from smoothed_DataFrame. 
-graphing_DataFrame.sort_index(axis=0, level=['Mean', 'SEM'], ascending=True, inplace=True) # Still sort index.
+graphing_DataFrame.sort_index(axis=0, level=['Group', 'Stat'], ascending=True, inplace=True) # Still sort index.
 
-# Now we populate it. 
+# This bit is hacky, but for groupby().mean() to work, you cant have 'object' dtypes.
+# given the complexity of the multi-index and the varying types, this is the simplest
+# way that I can think of to get the typing right. 
 
-# The question is how to dynamically code the group_by statement. 
+retyping_dict = list(itertools.product(*[paradigms, ['float64']]))
+retyping_dict.extend(list(itertools.product(*[group_variables], ['category'])))
+retyping_dict = dict(retyping_dict)
+for metric in metrics:
+	# Pull all levels of the Paradigm_Group_info for a given metric as floats and categories. 
+	temp_DataFrame = intermediate_DataFrame.loc[:, metric].astype(retyping_dict)
+	
+	# As before, begin by iterating over levels of individual factors. 
+	for factor in group_variables:
+		# Group the temporary dataframe by the current grouping variable and perform the operations of interest on it. 
+		grouped_means = temp_DataFrame.groupby(factor).mean()
+		grouped_SEM = temp_DataFrame.groupby(factor).sem()
+		for level in set(subject_info_master_df.loc[:, factor]):
+			# Then get the actual values (as an array) for each level. 
+			graphing_DataFrame.loc[(level, 'Mean'), (metric)] = grouped_means.loc[level].values 
+			graphing_DataFrame.loc[(level, 'SEM'), (metric)] = grouped_SEM.loc[level].values 
 
+	# Next we need to get the combos. 
+	if len(all_factor_levels)==2:
+		# First we'll do the simple one. 
+		big_grouped_mean = temp_DataFrame.groupby(group_variables).mean()
+		big_grouped_SEM = temp_DataFrame.groupby(group_variables).sem()
+		# big_grouped_mean will be a df with a multi-index. 
+		for group_combo in big_grouped_mean.index:
+			# The index in graphing_DataFrame is a string, so convert the multiindex tuple to that.
+			str_group_combo = '_'.join(group_combo)
+			# Make sure you got them in the right order by checking against the list used to create 
+			# the index for graphing_DataFrame.
+			if str_group_combo not in graphing_groups:
+				# if it's not there, try flipping the tuple by indexing in reverse.
+				str_group_combo = '_'.join(group_combo[::-1])
+			graphing_DataFrame.loc[(str_group_combo, 'Mean'), (metric)] = big_grouped_mean.loc[group_combo].values
+			graphing_DataFrame.loc[(str_group_combo, 'SEM'), (metric)] = big_grouped_SEM.loc[group_combo].values
 
-
+	else:
+		# Put a holder in until we figure out how to deal with this.
+		print("Sorry, I'm not yet equipped to graph 3 factors. Coming soon!")
 
 
 ################################
