@@ -24,8 +24,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from natsort import natsorted
 import sys
-import Tkinter_Selection_Ka_Modified as gui_select
 import tkinter
+import Tkinter_Selection_Ka_Modified as gui_select
 
 
 
@@ -67,7 +67,6 @@ while not files_found:
 	if continue_script == 'y':
 		print('Wonderful! Continuing.')
 		files_found = True
-		continue
 	
 	# If no, try to figure out why (i.e. ask for new base_directory or new search_pattern.)
 	elif continue_script == 'n':
@@ -145,11 +144,17 @@ master.eval('tk::PlaceWindow . center')
 subject_vars_dict = {}
 group_vars_dict = {}
 
+
 # Create 2 columns of checkboxes labeled with the selected indices.
 tkinter.Label(master, text="Subject Var").grid(row=0, column=0, sticky='W')
 tkinter.Label(master, text="Group Vars").grid(row=0, column=1, sticky='W')
 for row_num, var in enumerate(temp_df.index, start=1):
-	subject_vars_dict[var] = tkinter.BooleanVar()
+	# If the current variable is Box Number, default to true.
+	# It's most likely the one you'll use.
+	if var=='Box Number':
+		subject_vars_dict[var] = tkinter.BooleanVar(value=True)
+	else:
+		subject_vars_dict[var] = tkinter.BooleanVar()
 	group_vars_dict[var] = tkinter.BooleanVar()
 	tkinter.Checkbutton(master, variable=subject_vars_dict[var]).grid(row=row_num, column=0, sticky='E')
 	tkinter.Checkbutton(master, text=var, variable=group_vars_dict[var]).grid(row=row_num,column=1, sticky='W')
@@ -204,3 +209,55 @@ if continue_script=='n':
 	sys.exit()
 
 print('Excellent! Continuing to analysis.')
+
+
+################################
+#    Find and sort M_files     #
+################################
+
+# Store M_files_Summary file from each paradigm in a list. Print them as found to verify order.
+m_files = []
+print('I found the following: \n')
+for directory_tree in paradigm_directories:
+	m_files.extend(glob(os.path.join(directory_tree,'Analysis_Output', 'M_files_Summary.xlsx')))
+	print(m_files[-1])
+
+# Ask user whether it looks like everything was found and it's all in the right order.
+# I can't think why they wouldn't be, so I'm leaving it as a simple sys.exit() for now. 
+# If there's need, functionality to try to right the wrong in-run can be added later. 
+continue_script = input('Does that look right (y/n)?    ')
+if continue_script == 'n':
+	print("Hm. Ok, well I'll let you figure that out.")
+	sys.exit()
+
+
+
+################################
+#    Create master DataFrame   #
+################################
+# Index = Subject variable selected above. 
+# Columns = multiindex with levels Metric, Paradigm, Day
+
+# We'll hardcode the metrics for now because they should be consistent 
+# as long as the extraction code stays the same. 
+metrics = ['pokes_delay_window', 'pokes_iti_window', 'pokes_trial_window', 'pokes_paradigm_total'\
+		   'trials_omission', 'trials_incorrect', 'trials_reward', 'trials_initiated']
+
+# The name of each paradigm ought to be the last directory in each directory tree.
+paradigms = list(map(os.path.basename, paradigm_directories))
+
+# So far the standard seems to be 3 days per paradigm. We'll have to come up with some clever way to 
+# code this dynamically in the future though, because I have to imagine that 3 days won't always work.
+days = range(1,4)
+
+column_multiindex = pd.MultiIndex.from_product((metrics, paradigms, days))
+
+master_DataFrame = pd.DataFrame(index = subject_info_master_df.index, columns = column_multiindex)
+
+# Now we populate. 
+
+for m_file in m_files:
+	for metric in metrics:
+		temp_metric_df = pd.read_excel(m_file, sheet_name=metric, index_col=0)
+		# 
+		for day in days:
