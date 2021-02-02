@@ -268,7 +268,7 @@ for run_info_string in final_item_list:
     # Pull first start date and reformat to match datetimeFormat
     ref_date_as_datetime = datetime.datetime.strptime(TempStartDate[0], '%m/%d/%Y')
     ReferenceTime = '{} 00:00'.format(datetime.datetime.strftime(ref_date_as_datetime, '%Y/%m/%d'))
-    ref_time_as_datetime = datetime.datetime(ReferenceTime, datetimeFormat)
+    ref_time_as_datetime = datetime.datetime.strptime(ReferenceTime, datetimeFormat)
 
     # Determine the time between reference and the start time of each file.
     TempDurationSeconds = []

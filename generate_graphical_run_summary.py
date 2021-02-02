@@ -22,6 +22,13 @@ from glob import glob
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import rc
+# Set default font labels for graphs.
+font = {'family' : 'normal',
+        'weight' : 'bold',
+        'size'   : 22}
+rc('font', **font)
+
 from natsort import natsorted
 import sys
 import tkinter
@@ -413,13 +420,43 @@ graphing_DataFrame.to_csv('Group_Means_and_SEMS.csv')
 #   Graph individual Behavior  #
 ################################
 
+for metric in metrics:
+	# Begin by making the overall multi-way effect graph (i.e. graph the average of each group)
+	plt.figure(metric, figsize=(20, 15))
+	metric_legend_dict = {'Handles': [], 'Labels': []} 
+	for grp in two_way_effect_legend_labels.keys():
+		tmp_handle = plt.errorbar(x = range(len(paradigms)), y=graphing_DataFrame.loc[(grp, 'Mean'), (metric)], yerr=graphing_DataFrame.loc[(grp, 'SEM'), (metric)])
+		metric_legend_dict['Handles'].append(tmp_handle)
+		metric_legend_dict['Labels'].append(grp)
 
-# for metric in metrics:
-# 	plt.figure(metric)
-# 	for grp in two_way_effect_legend_labels.keys():
-# 		plt.errorbar(x = range(len(paradigms)), y=graphing_DataFrame.loc[(grp, 'Mean'), (metric)], yerr=graphing_DataFrame.loc[(grp, 'SEM'), (metric)])
-# for metric in ['trials_reward']:
-# 	for factor in main_effect_legend_labels.keys():
-# 		plt.figure(factor)
-# 		for level in main_effect_legend_labels[factor]:
-# 			plt.errorbar(x = range(len(paradigms)), y=graphing_DataFrame.loc[(level, 'Mean'), (metric)], yerr=graphing_DataFrame.loc[(level, 'SEM'), (metric)])
+	
+	# Pretty up the graphs by adding labels to the axes
+	plt.xticks(range(len(paradigms)), paradigms, rotation=-45)
+	plt.xlabel('Paradigm')
+	plt.title(metric)
+
+	# Label the lines using the list of handles generated during graphing (above)	
+	plt.legend(metric_legend_dict['Handles'], metric_legend_dict['Labels'])
+	
+	# Save the figure to the current file.
+	plt.savefig(f'{metric}_Two_Way_Effect.png')
+	plt.close('all')
+
+	# Do the above for each main effect. (i.e. iterate over factors and graph the average of each level, collapsing across other factors.)
+	for factor in main_effect_legend_labels.keys():
+		factor_legend_dict = {'Handles': [], 'Labels': []} 
+		plt.figure(factor, figsize=(20, 15))
+		for level in main_effect_legend_labels[factor]:
+			tmp_handle = plt.errorbar(x = range(len(paradigms)), y=graphing_DataFrame.loc[(level, 'Mean'), (metric)], yerr=graphing_DataFrame.loc[(level, 'SEM'), (metric)])
+			factor_legend_dict['Handles'].append(tmp_handle)
+			factor_legend_dict['Labels'].append(level)
+		
+		plt.xticks(range(len(paradigms)), paradigms, rotation=-45)
+		plt.xlabel('Paradigm')
+		plt.title(metric)	
+		
+		plt.legend(factor_legend_dict['Handles'], factor_legend_dict['Labels'])
+		
+		plt.savefig(f'MainEffectOf{factor}_on{metric}.png')
+		plt.close('all')
+	
