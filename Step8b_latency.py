@@ -143,7 +143,10 @@ def create_subject_column(plot_df, group_subject_list):
     for i in subject_idx_list:
         box_num = str(i + 1)  # box number in strings!
 
-        plot_df.loc[plot_df['Box Number'] == box_num, "Subject"] = group_subject_list[i]
+        box_idx = plot_df[plot_df['Box Number'] == box_num].index
+        
+        print(plot_df.loc[box_idx, 'Subject'])
+        plot_df.loc[box_idx, "Subject"] = group_subject_list[i]
 
     return plot_df
 
