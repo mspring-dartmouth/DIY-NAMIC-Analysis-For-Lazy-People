@@ -74,7 +74,8 @@ def return_metric_output_df(m_head_dict, m_parsed_dt_df, start_parsetime):
 
     #### Option 2 (return ALL parameters for every paradigm!)
 
-    valid_paradigm_list =  ["P1", "P2", "P3", "P4", "P5", "P5_5", "P6_3", "P6_6", "P6_9", "P5-5", "P6-3", "P6-6", "P6-9", "P4-RR5"]
+    valid_paradigm_list =  ["P1", "P2", "P3", "P4", "P5", "P5_5", "P6_3", "P6_6", "P6_9", "P5-5", "P6-3", "P6-6", "P6-9", "P4-RR5", \
+                            "P5-Sucrose"]
 
     ## returns ALL the parameters for every paradigm (for ex: returns delay window even for P1)
     if paradigm in valid_paradigm_list:

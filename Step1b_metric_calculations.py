@@ -36,9 +36,9 @@ def counts_during_window(m_parsed_dt_df, start_parsetime, window_of_interest, da
         # Reference Link: https://realpython.com/python-keyerror/
 
         try:
-            L_count = pivoted[window_of_interest[0]].sum()
-            M_count = pivoted[window_of_interest[1]].sum()
-            R_count = pivoted[window_of_interest[2]].sum()
+            L_count = pivoted[window_of_interest[0]].astype('float').sum()
+            M_count = pivoted[window_of_interest[1]].astype('float').sum()
+            R_count = pivoted[window_of_interest[2]].astype('float').sum()
             T_count = L_count + M_count + R_count
         except KeyError:
             L_count = 0

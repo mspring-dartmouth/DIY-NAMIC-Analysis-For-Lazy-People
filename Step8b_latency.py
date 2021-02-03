@@ -93,7 +93,7 @@ def get_i_response_latency(i_df, start_array, end_array):
     start_time = start_time_df.timestamp.tolist()
     end_time = end_time_df.timestamp.tolist()
 
-    latency_df = pd.DataFrame(zip(start_time, end_time, event_code), columns=['start_time', 'end_time', 'event_code'])
+    latency_df = pd.DataFrame(list(zip(start_time, end_time, event_code)), columns=['start_time', 'end_time', 'event_code'])
     latency_df['latency'] = latency_df.end_time - latency_df.start_time
     latency_df['location'] = latency_df.event_code.str[0]
 
@@ -145,8 +145,8 @@ def create_subject_column(plot_df, group_subject_list):
 
         box_idx = plot_df[plot_df['Box Number'] == box_num].index
         
-        print(plot_df.loc[box_idx, 'Subject'])
         plot_df.loc[box_idx, "Subject"] = group_subject_list[i]
+        print(plot_df.loc[box_idx, 'Subject'])
 
     return plot_df
 

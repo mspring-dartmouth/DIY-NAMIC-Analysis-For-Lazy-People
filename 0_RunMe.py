@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
+
+'''
 Created on Thu Jun 25 15:07:10 2020
 
 @author: Ichimaru
-"""
+'''
 
 
 #from Step_0_Settings import *    # import everything
@@ -58,7 +59,9 @@ except IndexError: # If no argument provided, prompt for selection.
 box_numbers = get_box_numbers(files_list)
 file_count = len(files_list)
 time.sleep(2) # add some delay time
+
 print(f'\n Thank you,  I found {file_count} text file(s)')
+
 time.sleep(2) # add some delay time
 
 if len(files_list) == 0:
