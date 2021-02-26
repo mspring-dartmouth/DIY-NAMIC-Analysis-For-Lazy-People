@@ -639,12 +639,8 @@ for run_info_string in final_item_list:
             ##### Actual RUN ##### Actual RUN ##### Actual RUN #####
             
             ## Select single csv file (SINGLE DAY)
-            #file_path = select_single_file(IOUTDI23R_temp)
-            file_path = IOUTDIR_temp
-            
-            ## Get the multilevel dataframe (from Step 1)
-            multi_df = get_multi_df(file_path)
-            
+            multi_df = pd.read_csv(file_path, header=[0, 1], index_col=[0], low_memory=False)
+
             ## Final Wrapper Function (from Step 1 #7)
             (m_head_dict, m_parsed_dt_df) = final_m_header_and_parsed_dt_df(multi_df, columns, start_parsetime, end_parsetime)
             

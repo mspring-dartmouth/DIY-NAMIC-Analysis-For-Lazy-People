@@ -86,7 +86,7 @@ def convert_index_code_to_string(df):
     """
 
     new_idx_list = []
-    idx_list = df.index.to_list()
+    idx_list = list(df.index)
     for i in range(len(idx_list)):
         dates = idx_list[i][:10]  # includes the year!!
 
