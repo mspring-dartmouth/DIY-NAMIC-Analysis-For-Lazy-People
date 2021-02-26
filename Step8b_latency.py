@@ -92,20 +92,28 @@ def get_i_response_latency(i_df, start_array, end_array):
                                      columns=['event_code', 'latency', 'location', 'complete', 'correct'])
 
     # Event code and side are both already known based on the start times.
-    code_info_latency.loc[:, 'event_code'] = start_code_df.loc[:, 'event_code']
-    code_info_latency.loc[:, 'location'] = code_info_latency.event_code.str[0]
+    code_info_latency.loc[:, 'event_code'] = start_code_df.loc[:, 'event_code'].values
+    code_info_latency.loc[:, 'location'] = code_info_latency.event_code.str[0].values
 
     for idx, start_time_stamp in enumerate(start_t_working):
 
         # Find the endpoint nearest in time to the start time and calculate the latency from it.
-        end_time_stamp = end_t_working[end_t_working>start_time_stamp].min()
-        code_info_latency.loc[idx, 'latency'] = end_time_stamp - start_time_stamp
+        try:
+            end_time_stamp = end_t_working[end_t_working>start_time_stamp].min()
+            code_info_latency.loc[idx, 'latency'] = end_time_stamp - start_time_stamp
 
-        # Then find the identity of the event that ended the trial. 
-        end_code = end_code_df.loc[end_code_df.timestamp==end_time_stamp, 'event_code']
-        
+            # Then find the identity of the event that ended the trial. 
+            end_code = end_code_df.loc[end_code_df.timestamp==end_time_stamp, 'event_code'].values[0]
+        except ValueError:
+            # If the final trial has no endpoint, the expression end_t_working[end_t_working>start_time_stamp] will 
+            # return an empty array. Attempting to get the min() of an empty array returns a ValueError. 
+            # So, set the latency as NaN and the end_code as a generic omission marker. 
+
+            code_info_latency.loc[idx, 'latency'] = np.nan
+            end_code = 'Last_Trial'
+
         # Check for omissions
-        if str(end_code) in ['7540', '8540', '9540']: # End code should already be a string, but I'm paranoid about that sort of thing. 
+        if str(end_code) in ['7540', '8540', '9540', 'Last_Trial']: # End code should already be a string, but I'm paranoid about that sort of thing. 
             # If the trial was omitted, whether or not it was "correct" is indeterminate
             code_info_latency.loc[idx, ['complete', 'correct']] = [0, np.nan]
        
