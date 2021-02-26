@@ -43,7 +43,12 @@ def determine_arrays(paradigm, latency):
     Output: arrays of start/end code selections
     '''
     response_start = [['8171'], ['7171', '9171'], ['8071'], ['8071'], ['8071'], ['7171', '9171']]
-    response_end = [['8071'], ['7071', '9071'], ['7071', '9071'], ['7071', '9071'], ['7071', '9071'], ['7071', '9071']]
+    # For later paradigms include not only correct nose pokes (x071), but also omitted trials (x540) and incorrect trials (x160.)
+    response_end = [['8071'], ['7071', '9071', '7540', '9540', '7160', '9160'], 
+                    ['7071', '9071', '7540', '9540', '7160', '9160'], 
+                    ['7071', '9071', '7540', '9540', '7160', '9160'], 
+                    ['7071', '9071', '7540', '9540', '7160', '9160'], 
+                    ['7071', '9071', '7540', '9540', '7160', '9160']]
     retrieval_start =[['0'],['7071', '9071'],['7071', '9071'],['7071', '9071'],['7071', '9071'],['7071', '9071']]
     retrieval_end =[['0'],['8071'],['8071'],['8071'],['8071'],['8071']]
     initiation_start = [['0'],['0'],['8171'],['8171'],['8171','7540','8540','9540','7160','8160','9160'],
@@ -72,33 +77,47 @@ def get_i_response_latency(i_df, start_array, end_array):
     # determine events (rows) in raw data which correspond to start/endpoints for latency calculation
     start_code_df = i_df.loc[i_df.event_code.isin(start_array)]
     end_code_df = i_df.loc[i_df.event_code.isin(end_array)]
-
     end_timestamp = []
-    for n in range(len(start_code_df.event_code)):
-        # pull out start/endpoint timestamps
-        end_t_working = end_code_df.loc[:,'timestamp']
-        start_t_working = start_code_df.loc[:,'timestamp']
 
-        # filter endpoints so that only nearest endpoint to each startpoint is used
-        # (otherwise would have multiple endpoints per startpoint which messes up latency calc)
-        nearest_end = min([t for t in end_t_working if t > start_t_working.iloc[n]], default=np.nan)
-        end_timestamp.append(nearest_end)
+    # pull out start/endpoint timestamps
+    start_t_working = start_code_df.loc[:,'timestamp'].values
+    end_t_working = end_code_df.loc[:,'timestamp'].values
 
-    # modify endpoint events (rows) to only include endpoints of choice
-    end_time_df = end_code_df.loc[end_code_df['timestamp'].isin(end_timestamp)]
-    start_time_df = start_code_df
+    # "complete" refers to whether the trial was completed or omitted. For paradigms or latency type where this 
+    # does not apply, everything will be marked as 1. Omitted trials will be marked in this column as 0.
+    # "correct" is valid only for response latencies in paradigms where the animal has a choice. In such paradigms, 
+    # correct responses (i.e. nosepokes made into the illuminated port) will be marked as 1; incorrect responses (nosepokes
+    # made into the non-illuminated port) will be marked as 0. For all other scenarios, all trials will be marked as 1. 
+    code_info_latency = pd.DataFrame(index=range(len(start_t_working)),
+                                     columns=['event_code', 'latency', 'location', 'complete', 'correct'])
 
-    # construct final individual latency df (from here onwards, modified from JHL code)
-    event_code = start_code_df.loc[:, 'event_code']
-    start_time = start_time_df.timestamp.tolist()
-    end_time = end_time_df.timestamp.tolist()
+    # Event code and side are both already known based on the start times.
+    code_info_latency.loc[:, 'event_code'] = start_code_df.loc[:, 'event_code']
+    code_info_latency.loc[:, 'location'] = code_info_latency.event_code.str[0]
 
-    latency_df = pd.DataFrame(list(zip(start_time, end_time, event_code)), columns=['start_time', 'end_time', 'event_code'])
-    latency_df['latency'] = latency_df.end_time - latency_df.start_time
-    latency_df['location'] = latency_df.event_code.str[0]
+    for idx, start_time_stamp in enumerate(start_t_working):
 
-    # only keep relevant info (filter out columns)
-    code_info_latency = latency_df[['event_code', 'latency', 'location']]
+        # Find the endpoint nearest in time to the start time and calculate the latency from it.
+        end_time_stamp = end_t_working[end_t_working>start_time_stamp].min()
+        code_info_latency.loc[idx, 'latency'] = end_time_stamp - start_time_stamp
+
+        # Then find the identity of the event that ended the trial. 
+        end_code = end_code_df.loc[end_code_df.timestamp==end_time_stamp, 'event_code']
+        
+        # Check for omissions
+        if str(end_code) in ['7540', '8540', '9540']: # End code should already be a string, but I'm paranoid about that sort of thing. 
+            # If the trial was omitted, whether or not it was "correct" is indeterminate
+            code_info_latency.loc[idx, ['complete', 'correct']] = [0, np.nan]
+       
+        # Then incorrect responses
+        elif str(end_code) in ['7160', '8160', '9160']:
+            # The trial was not omitted, but was incorrect.
+            code_info_latency.loc[idx, ['complete', 'correct']] = [1, 0]
+    
+        else:
+            code_info_latency.loc[idx, ['complete', 'correct']] = [1, 1]
+
+
     return code_info_latency
 
 
