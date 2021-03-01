@@ -44,12 +44,14 @@ def determine_arrays(paradigm, latency):
     '''
     response_start = [['8171'], ['7171', '9171'], ['8071'], ['8071'], ['8071'], ['7171', '9171']]
     # For later paradigms include not only correct nose pokes (x071), but also omitted trials (x540) and incorrect trials (x160.)
+    # as the "end" for response latency calculations.
     response_end = [['8071'], ['7071', '9071', '7540', '9540', '7160', '9160'], 
                     ['7071', '9071', '7540', '9540', '7160', '9160'], 
                     ['7071', '9071', '7540', '9540', '7160', '9160'], 
                     ['7071', '9071', '7540', '9540', '7160', '9160'], 
                     ['7071', '9071', '7540', '9540', '7160', '9160']]
-    retrieval_start =[['0'],['7071', '9071'],['7071', '9071'],['7071', '9071'],['7071', '9071'],['7071', '9071']]
+    # The clock on "retrieval" should only start when an actual reward is delivered.
+    retrieval_start =[['0'],['8271'],['8271'],['8271'],['8271'],['8271']]
     retrieval_end =[['0'],['8071'],['8071'],['8071'],['8071'],['8071']]
     initiation_start = [['0'],['0'],['8171'],['8171'],['8171','7540','8540','9540','7160','8160','9160'],
                         ['8171','7540','8540','9540','7160','8160','9160']]
