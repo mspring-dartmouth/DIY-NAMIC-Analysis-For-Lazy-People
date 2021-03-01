@@ -53,8 +53,10 @@ def determine_arrays(paradigm, latency):
     # The clock on "retrieval" should only start when an actual reward is delivered.
     retrieval_start =[['0'],['8271'],['8271'],['8271'],['8271'],['8271']]
     retrieval_end =[['0'],['8071'],['8071'],['8071'],['8071'],['8071']]
-    initiation_start = [['0'],['0'],['8171'],['8171'],['8171','7540','8540','9540','7160','8160','9160'],
-                        ['8171','7540','8540','9540','7160','8160','9160']]
+    # A trial ends with success (8170, middle LED turning off), omission (*540), or incorrect choice (*160)
+    initiation_start = [['0'],['0'],['8170'],['8170'],['8170','7540','8540','9540','7160','8160','9160'],
+                        ['8170','7540','8540','9540','7160','8160','9160']]
+    # A new trial begins with a poke into the central port after any of the previous events. 
     initiation_end = [['8071'],['8071'],['8071'],['8071'],['8071'],['8071']]
     if latency == 'response':
         start_array = response_start[paradigm-1]
