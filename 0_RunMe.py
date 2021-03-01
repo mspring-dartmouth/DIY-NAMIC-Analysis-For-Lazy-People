@@ -41,9 +41,16 @@ from natsort import natsorted
 
 # Bin needs to be in hours.  To do minutes,  change line 245
 print('Files with acquisition time less than the user defined analysis bin size will <<NOT>> be analyzed even though the files will still be sorted')
-Bin = input ('What is the analysis bin size in hours? \n(Integer input, lab default is "23")\n\n')
-ExtraBin = input('There are residual time leftover in the end of the files.  Select a bin size threshold (in hours) to export those leftover time or type in the same bin size again if you don"t want those residual times. \n(Integer/Float input, lab default is "15") \n\n ')
-YesToLatency = input ('\n We will export the count data.\n However, latency data with small analysis time window (e.g. 2 hrs) can cause errors.\n Do you also want to export latency data? (y/n).) )\n\n')
+
+if 'use_defaults' in sys.argv:
+	print('Using lab defaults...')
+	Bin = 23
+	ExtraBin = 15
+	YesToLatency = 'y'
+else:
+	Bin = input ('What is the analysis bin size in hours? \n(Integer input, lab default is "23")\n\n')
+	ExtraBin = input('There are residual time leftover in the end of the files.  Select a bin size threshold (in hours) to export those leftover time or type in the same bin size again if you don"t want those residual times. \n(Integer/Float input, lab default is "15") \n\n ')
+	YesToLatency = input ('\n We will export the count data.\n However, latency data with small analysis time window (e.g. 2 hrs) can cause errors.\n Do you also want to export latency data? (y/n).) )\n\n')
 
 
 # # Directory Selection
@@ -223,11 +230,12 @@ for f_name in final_item_list:
 # store file paths as variables for use in later code. 
 
 IOUTDIR_M_files = os.path.join(IOUTDIR_Analysis_Output, 'M_files')  
-IOUTDIR_Latency_Response = os.path.join(IOUTDIR_Analysis_Output, 'Latency_Response')  
-IOUTDIR_Latency_Retrieval = os.path.join(IOUTDIR_Analysis_Output, 'Latency_Retrieval')  
-IOUTDIR_Latency_Initiation = os.path.join(IOUTDIR_Analysis_Output, 'Latency_Initiation')  
+IOUTDIR_Latency_dirs = {}
+IOUTDIR_Latency_dirs['response'] = os.path.join(IOUTDIR_Analysis_Output, 'Latency_Response')  
+IOUTDIR_Latency_dirs['retrieval'] = os.path.join(IOUTDIR_Analysis_Output, 'Latency_Retrieval')  
+IOUTDIR_Latency_dirs['initiation'] = os.path.join(IOUTDIR_Analysis_Output, 'Latency_Initiation')  
 
-for directory in [IOUTDIR_M_files, IOUTDIR_Latency_Response, IOUTDIR_Latency_Retrieval, IOUTDIR_Latency_Initiation]:
+for directory in [IOUTDIR_M_files, IOUTDIR_Latency_dirs['response'], IOUTDIR_Latency_dirs['retrieval'], IOUTDIR_Latency_dirs['initiation']]:
     if not os.path.isdir(directory): 
         os.mkdir(directory)
 
@@ -389,304 +397,68 @@ for run_info_string in final_item_list:
         processed_list.append(run_info_string.split("-_-")[-2]+ '  '+ start_parsetime + '   ' + end_parsetime)
         processed_p_list.append(run_info_string.split("-_-")[-2])
         processed_date_list.append(start_parsetime)
-    #loop through all the timestamps per concat file for function_8 with latency_choice = response 
-    counttwo = 0
-    for u in range(len(Timelist)-1):
-        
-  
-        #copied from function_8 call then modified file path, and user input
-        
-        ### INPUT: concatenated csv data AFTER Step 0  (_concat suffix)
-        
-        ### IMPT NOTE on the outputted Excel File:
-        ## --> last two digits in event_code column will determine if the poke is correct (valid) or incorrect (invalid)
-        ## If last two digits are "70": then correct trials
-        ## If last two digits are "60": then incorrect trials
-        ## Will not contain any omission trials! (by definition of latency, can NOT contain any latency data on omission trials)
-        
-        ### THIS Script SAVES and also PLOTS!
-        
-        ## Input Group # & Start-Time & End-Time for Latency Plotting  (PARSING)
-        # group_number_input = input("Which group is this? (Ex: g3) ").strip().lower()
-        # start_parsetime = input("Enter start-time for LATENCY Plotting (YYYY/MM/DD HH:MM) ").strip()
-        # end_parsetime = input("Enter end-time for LATENCY Plotting (YYYY/MM/DD HH:MM) ").strip()
-        # paradigm = input('Enter paradigm number (1-6)').strip()
-        # paradigm = int(paradigm)
-        # latency_choice = input('Enter name of LATENCY you wish to calculate (response, retrieval, initiation)').strip().lower()
-        
-        group_number_input = ("g5").strip().lower()
-        start_parsetime = (Timelist[counttwo]).strip()
-        end_parsetime = (Timelist[counttwo+1]).strip()
-        #paradigm = (((run_info_string).split("-")[0]).replace('P', '')).strip()
-        paradigm = re.split('-|_',run_info_string)[0].replace('P', '').strip()  #  allows P5-5 or P5_5  "-" or "_" labeling 
-        paradigm = int(paradigm)
-        print('\nParadigm number for latency code (response) is ...', paradigm)
-        latency_choice = ('response').strip().lower()
-        
-        
-        if((paradigm == 2) or YesToLatency != 'y'):
-            # do not run paradigm 2 (also called P2) because P2 have missing timestamps for the light
-            counttwo = counttwo+1
-            print('Omitting (response) Latency analysis for P2')
-            
-        else:
-            
-            (group, control_list, exp_list, group_subject_list) = det_group_number(group_number_input)
 
+    #loop through all the timestamps per concat file for function_8 over different latency types.
+    for latency_choice in ['response', 'retrieval', 'initiation']:
+        counttwo = 0
+        for u in range(len(Timelist)-1):
+            
+      
+            #copied from function_8 call then modified file path, and user input
+            
+            ### INPUT: concatenated csv data AFTER Step 0  (_concat suffix)
+            
+            ### IMPT NOTE on the outputted Excel File:
+            ## --> last two digits in event_code column will determine if the poke is correct (valid) or incorrect (invalid)
+            ## If last two digits are "70": then correct trials
+            ## If last two digits are "60": then incorrect trials
+            ## If last three digits are "540": it is an omission trial. Recall that the "latency" here is meaningless, and these trials should be right-censored.
 
-            ##### Actual RUN ##### Actual RUN ##### Actual RUN #####
+            group_number_input = ("g5").strip().lower()
+            start_parsetime = (Timelist[counttwo]).strip()
+            end_parsetime = (Timelist[counttwo+1]).strip()
+            paradigm = re.split('-|_',run_info_string)[0].replace('P', '').strip()  #  allows P5-5 or P5_5  "-" or "_" labeling 
+            paradigm = int(paradigm)
+            print(f'\nParadigm number for latency code {latency_choice} is ...', paradigm)            
             
-            ## Get the multilevel dataframe and the header information
-            multi_df = pd.read_csv(file_path, header=[0, 1], index_col=[0], low_memory=False)
-            
-            ## Final Wrapper Function (from Step 1 #7)
-            (m_head_dict, m_parsed_dt_df) = final_m_header_and_parsed_dt_df(multi_df, columns, start_parsetime, end_parsetime)
-            
-            ## Latency calculation
-            (trial_start, trial_end) = determine_arrays(paradigm, latency_choice)
-            
-            m_latency_df = multi_latency_concat(m_parsed_dt_df, trial_start, trial_end)
-            
-            
-            ##### SAVE Data for Aggregated Plotting
-            
-            # Save TO plotting-friendly format!!
-            # Objective: In order to concatenate the latency files later!
-            
-            #save_title = IOUTDIR_Latency_Response + '/' + start_parsetime[:10].replace("/","-") + "_latency_Response.xlsx"
-            save_title = IOUTDIR_Latency_Response + '/' + run_info_string.split('-_-')[0] + '_'+ ((start_parsetime.replace('/','_')).replace(' ','-')).replace(':','_') + "_latency_Response.xlsx"
-   
-            
-            plot_df = convert_to_long_format(m_latency_df)
-            plot_df['Group'] = group   # Adding Group Information!
-            plot_df = create_subject_column(plot_df, group_subject_list)  # Creates subject columns!
-            
-            # print(plot_df.dtypes)
-            
-            # Saving Individual latency df to long format!
-            plot_df.to_excel(save_title)
-            
-            
-            
-            #### PLOTTING!!!  -- Single Day CDF
-            
-            trial_duration = 5000
-            #fig, ax = plot_single_latency_cdf(m_latency_df, start_parsetime, control_list, exp_list, threshold=trial_duration, plot_dropped_box=False, valid_trials=True, horizontal=0.9, port_loc='all')
-            
-            # final_latency_df.to_excel(title)
-            # print(test)
-            
-            #ax.set_ylabel("Cumulative Density", fontsize=14)
-            #ax.set_xlabel("Latency (ms)", fontsize=14)
-            
-            #plt.tight_layout()
-            #plt.show()
-            
-            ## Save Here!
-            # plt.savefig("Whatever title you want")
+            if YesToLatency!='y':
+                counttwo = counttwo+1
+                print(f'Omitting {latency_choice} Latency analysis for P2')
+            elif((paradigm == 2) and (latency_choice=='response')):
+                # do not run paradigm 2 (also called P2) because P2 have missing timestamps for the light
+                counttwo = counttwo+1
+                print('Omitting (response) Latency analysis for P2')
+            elif((paradigm == 1) and (latency_choice=='retrieval')):
+                # do not run paradigm 2 (also called P2) because P2 have missing timestamps for the light
+                counttwo = counttwo+1
+                print('Omitting (retrieval) Latency analysis for P1')
+            elif((paradigm < 5) and (latency_choice=='initiation')):
+                # do not run paradigm 2 (also called P2) because P2 have missing timestamps for the light
+                counttwo = counttwo+1
+                print('Omitting (initiation) Latency analysis for P1, P2, P3 and P4')
+                
+                
+            else:
+                (group, control_list, exp_list, group_subject_list) = det_group_number(group_number_input)                
+                ## Get the multilevel dataframe and the header information
+                multi_df = pd.read_csv(file_path, header=[0, 1], index_col=[0], low_memory=False)
+                ## Final Wrapper Function (from Step 1 #7)
+                (m_head_dict, m_parsed_dt_df) = final_m_header_and_parsed_dt_df(multi_df, columns, start_parsetime, end_parsetime)
+                ## Latency calculation
+                (trial_start, trial_end) = determine_arrays(paradigm, latency_choice)         
+                m_latency_df = multi_latency_concat(m_parsed_dt_df, trial_start, trial_end)
+                
+                      
+                plot_df = convert_to_long_format(m_latency_df)
+                plot_df['Group'] = group   # Adding Group Information!
+                plot_df = create_subject_column(plot_df, group_subject_list)  # Creates subject columns!
+       
+                # Saving Individual latency df to long format!
+                save_title = IOUTDIR_Latency_dirs[latency_choice] + '/' + run_info_string.split('-_-')[0] + '_'+ ((start_parsetime.replace('/','_')).replace(' ','-')).replace(':','_') + f"_latency_{latency_choice}.xlsx"
+                plot_df.to_excel(save_title)
 
-        
-            counttwo = counttwo+1
-         
-    
-    
-    #loop through all the timestamps per concat file for function_8 with latency_choice = retrieval 
-    counttwo = 0
-    for u in range(len(Timelist)-1):
-        
-  
-        #copied from function_8 call then modified file path, and user input
-        
-        ### INPUT: concatenated csv data AFTER Step 0  (_concat suffix)
-        
-        ### IMPT NOTE on the outputted Excel File:
-        ## --> last two digits in event_code column will determine if the poke is correct (valid) or incorrect (invalid)
-        ## If last two digits are "70": then correct trials
-        ## If last two digits are "60": then incorrect trials
-        ## Will not contain any omission trials! (by definition of latency, can NOT contain any latency data on omission trials)
-        
-        ### THIS Script SAVES and also PLOTS!
-        
-        ## Input Group # & Start-Time & End-Time for Latency Plotting  (PARSING)
-        # group_number_input = input("Which group is this? (Ex: g3) ").strip().lower()
-        # start_parsetime = input("Enter start-time for LATENCY Plotting (YYYY/MM/DD HH:MM) ").strip()
-        # end_parsetime = input("Enter end-time for LATENCY Plotting (YYYY/MM/DD HH:MM) ").strip()
-        # paradigm = input('Enter paradigm number (1-6)').strip()
-        # paradigm = int(paradigm)
-        # latency_choice = input('Enter name of LATENCY you wish to calculate (response, retrieval, initiation)').strip().lower()
-        
-        group_number_input = ("g5").strip().lower()
-        start_parsetime = (Timelist[counttwo]).strip()
-        end_parsetime = (Timelist[counttwo+1]).strip()
-        #paradigm = (((run_info_string).split("-")[0]).replace('P', '')).strip()
-        paradigm = re.split('-|_',run_info_string)[0].replace('P', '').strip()  #  allows P5-5 or P5_5  "-" or "_" labeling 
-        paradigm = int(paradigm)
-        print('\nParadigm number for latency code (retrieval) is ...', paradigm)
-        latency_choice = ('retrieval').strip().lower()
-        
-        
-        if((paradigm == 1) or YesToLatency != 'y'):
-            # do not run paradigm 2 (also called P2) because P2 have missing timestamps for the light
-            counttwo = counttwo+1
-            print('Omitting (retrieval) Latency analysis for P1')
-            
-        else:
-            
-            (group, control_list, exp_list, group_subject_list) = det_group_number(group_number_input)
-
-
-            ##### Actual RUN ##### Actual RUN ##### Actual RUN #####
-            
-            ## Select single csv file (SINGLE DAY)
-            multi_df = pd.read_csv(file_path, header=[0, 1], index_col=[0], low_memory=False)
-
-            ## Final Wrapper Function (from Step 1 #7)
-            (m_head_dict, m_parsed_dt_df) = final_m_header_and_parsed_dt_df(multi_df, columns, start_parsetime, end_parsetime)
-            
-            ## Latency calculation
-            (trial_start, trial_end) = determine_arrays(paradigm, latency_choice)
-            
-            m_latency_df = multi_latency_concat(m_parsed_dt_df, trial_start, trial_end)
-            
-            
-            ##### SAVE Data for Aggregated Plotting
-            
-            # Save TO plotting-friendly format!!
-            # Objective: In order to concatenate the latency files later!
-            
-            #save_title = IOUTDIR_Latency_Retrieval + '/' + start_parsetime[:10].replace("/","-") + "_latency_Retrieval.xlsx"
-            save_title = IOUTDIR_Latency_Retrieval + '/' + run_info_string.split('-_-')[0] + '_'+ ((start_parsetime.replace('/','_')).replace(' ','-')).replace(':','_') + "_latency_Retrieval.xlsx"
-   
-            
-            plot_df = convert_to_long_format(m_latency_df)
-            plot_df['Group'] = group   # Adding Group Information!
-            plot_df = create_subject_column(plot_df, group_subject_list)  # Creates subject columns!
-            
-            # print(plot_df.dtypes)
-            
-            # Saving Individual latency df to long format!
-            plot_df.to_excel(save_title)
-            
-            
-            
-            #### PLOTTING!!!  -- Single Day CDF
-            
-            trial_duration = 5000
-            #fig, ax = plot_single_latency_cdf(m_latency_df, start_parsetime, control_list, exp_list, threshold=trial_duration, plot_dropped_box=False, valid_trials=True, horizontal=0.9, port_loc='all')
-            
-            # final_latency_df.to_excel(title)
-            # print(test)
-            
-            #ax.set_ylabel("Cumulative Density", fontsize=14)
-            #ax.set_xlabel("Latency (ms)", fontsize=14)
-            
-            #plt.tight_layout()
-            #plt.show()
-            
-            ## Save Here!
-            # plt.savefig("Whatever title you want")
-
-        
-            counttwo = counttwo+1
-         
-        
-    #loop through all the timestamps per concat file for function_8 with latency_choice = initiation 
-    counttwo = 0
-    for u in range(len(Timelist)-1):
-        
-  
-        #copied from function_8 call then modified file path, and user input
-        
-        ### INPUT: concatenated csv data AFTER Step 0  (_concat suffix)
-        
-        ### IMPT NOTE on the outputted Excel File:
-        ## --> last two digits in event_code column will determine if the poke is correct (valid) or incorrect (invalid)
-        ## If last two digits are "70": then correct trials
-        ## If last two digits are "60": then incorrect trials
-        ## Will not contain any omission trials! (by definition of latency, can NOT contain any latency data on omission trials)
-        
-        ### THIS Script SAVES and also PLOTS!
-        
-        ## Input Group # & Start-Time & End-Time for Latency Plotting  (PARSING)
-        # group_number_input = input("Which group is this? (Ex: g3) ").strip().lower()
-        # start_parsetime = input("Enter start-time for LATENCY Plotting (YYYY/MM/DD HH:MM) ").strip()
-        # end_parsetime = input("Enter end-time for LATENCY Plotting (YYYY/MM/DD HH:MM) ").strip()
-        # paradigm = input('Enter paradigm number (1-6)').strip()
-        # paradigm = int(paradigm)
-        # latency_choice = input('Enter name of LATENCY you wish to calculate (response, retrieval, initiation)').strip().lower()
-        
-        group_number_input = ("g5").strip().lower()
-        start_parsetime = (Timelist[counttwo]).strip()
-        end_parsetime = (Timelist[counttwo+1]).strip()
-        #paradigm = (((run_info_string).split("-")[0]).replace('P', '')).strip()
-        paradigm = re.split('-|_',run_info_string)[0].replace('P', '').strip()  #  allows P5-5 or P5_5  "-" or "_" labeling 
-        paradigm = int(paradigm)
-        print('\nParadigm number for latency code (initiation) is ...', paradigm)
-        latency_choice = ('initiation').strip().lower()
-        
-        
-        if((paradigm < 5) or YesToLatency != 'y'):
-            # do not run paradigm 2 (also called P2) because P2 have missing timestamps for the light
-            counttwo = counttwo+1
-            print('Omitting (initiation) Latency analysis for P1, P2, P3 and P4')
-            
-        else:
-            
-            (group, control_list, exp_list, group_subject_list) = det_group_number(group_number_input)
-
-
-            ##### Actual RUN ##### Actual RUN ##### Actual RUN #####
-            
-            ## Select single csv file (SINGLE DAY)
-            multi_df = pd.read_csv(file_path, header=[0, 1], index_col=[0], low_memory=False)
-
-            ## Final Wrapper Function (from Step 1 #7)
-            (m_head_dict, m_parsed_dt_df) = final_m_header_and_parsed_dt_df(multi_df, columns, start_parsetime, end_parsetime)
-            
-            ## Latency calculation
-            (trial_start, trial_end) = determine_arrays(paradigm, latency_choice)
-            
-            m_latency_df = multi_latency_concat(m_parsed_dt_df, trial_start, trial_end)
-            
-            
-            ##### SAVE Data for Aggregated Plotting
-            
-            # Save TO plotting-friendly format!!
-            # Objective: In order to concatenate the latency files later!
-            
-            #save_title = IOUTDIR_Latency_Initiation + '/' + start_parsetime[:10].replace("/","-") + "_latency_Initiation.xlsx"
-            save_title = IOUTDIR_Latency_Initiation + '/' + run_info_string.split('-_-')[0] + '_'+ ((start_parsetime.replace('/','_')).replace(' ','-')).replace(':','_') + "_latency_Initiation.xlsx"
-            
-            plot_df = convert_to_long_format(m_latency_df)
-            plot_df['Group'] = group   # Adding Group Information!
-            plot_df = create_subject_column(plot_df, group_subject_list)  # Creates subject columns!
-            
-            # print(plot_df.dtypes)
-            
-            # Saving Individual latency df to long format!
-            plot_df.to_excel(save_title)
-            
-            
-            
-            #### PLOTTING!!!  -- Single Day CDF
-            
-            trial_duration = 5000
-            #fig, ax = plot_single_latency_cdf(m_latency_df, start_parsetime, control_list, exp_list, threshold=trial_duration, plot_dropped_box=False, valid_trials=True, horizontal=0.9, port_loc='all')
-            
-            # final_latency_df.to_excel(title)
-            # print(test)
-            
-            #ax.set_ylabel("Cumulative Density", fontsize=14)
-            #ax.set_xlabel("Latency (ms)", fontsize=14)
-            
-            #plt.tight_layout()
-            #plt.show()
-            
-            ## Save Here!
-            # plt.savefig("Whatever title you want")
-
-        
-            counttwo = counttwo+1
+                counttwo = counttwo+1
+             
         
 # run step_2 Function call (copied from Step2F_Function)
     
@@ -749,38 +521,4 @@ print(f'\n It only took me {runtime} minutes to run the anlaysis!')
 print('\n\n For your convenience, paradigm information is stored in variable < processed_list_forExcel > ')
 
 print(f'\n\n Your Analysis Output is located in {OUTDIR}')
-
-
-
-    # x = [ 1,2,3,4,5,6,7]
-    # count = 0
-    # for u in range(len(x)-1):
-    #     b = str(x[count]) + ' ' + str(x[count+1]) 
-    #     count=count +1
-    #     print(b)
-    
-    
-    
-    
-    
-    
-    
-    #  concat file link to import to function_1
-    # IOUTDIR_temp = os.path.join(IOUTDIR_Concat_files, run_info_string+ "_concat.csv")
-    # print(IOUTDIR_temp)
-    
-    # pull information from file_info 
-
-    
-
-    # 
-    # SelectedEndtime
-
-
-# #  test out function 
-# def timestwo(x, y):
-#     a = (x + y)*2
-#     return a
- 
-# print(timestwo(1,2))   
 

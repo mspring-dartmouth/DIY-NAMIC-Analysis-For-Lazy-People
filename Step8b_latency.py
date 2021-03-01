@@ -165,7 +165,7 @@ def convert_to_long_format(multi_df):
     stacked_idx = stacked.reset_index()
     stacked_idx.columns.name = ""
 
-    plot_df = stacked_idx[['Box Number','event_code','latency','location']]
+    plot_df = stacked_idx[['Box Number','event_code','latency','location', 'complete', 'correct']]
 
     return plot_df
 
